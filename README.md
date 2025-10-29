@@ -14,6 +14,6 @@ Implementar a lógica da memória principal
 ### Cache
 ?????
 ### Montador
-traduzir o código em C pra binário
+traduzir o código de assembly pra binário
 
 ### Interface
