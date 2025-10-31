@@ -135,8 +135,6 @@
 			 - `void run_shifter(shifter* s, mbr* b, barrC* c)`: executa a operação do deslocador.
 			 - `void lshift(shifter* s)`: executa o deslocamento à esquerda.
 			 - `void rshift(shifter* s)`: executa o deslocamento à direita.
-	- Barramentos
-		- Nota: não fiz a documentação do barramento pois tratei os decodificadores como se fossem os barramentos. Depois avaliar com o grupo se isso continuará dessa forma.
 	- AMUX
 		- **Função**
 			- Fazer a passagem de valor ou do MBR ou do Latch A para a ULA, de acordo com o sinal da unidade de controle. 
