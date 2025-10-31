@@ -225,6 +225,12 @@
 			 ```
 			 - `void run_mmux(mmux* m, mpc* p)`: faz a operação do mmux.
 ### Memória
+
+		Seria implementado como um simples array de memória
+		mem[4200] //n lembro o numero exato agora
+		for i in mem = 000000000000
+		salva o valor binário
+		precisaria de uma função convetendo o binário para int e usar isso para o endereço
 Implementar a lógica da memória principal
 ### Cache
 ?????
