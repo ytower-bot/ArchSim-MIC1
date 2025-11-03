@@ -88,6 +88,3 @@ help:
 
 # Phony targets
 .PHONY: all debug test run clean fclean re install help
-
-# Show compilation progress
-.SILENT: clean fclean
