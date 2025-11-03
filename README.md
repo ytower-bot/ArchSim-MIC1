@@ -233,8 +233,63 @@
 		precisaria de uma função convetendo o binário para int e usar isso para o endereço
 Implementar a lógica da memória principal
 ### Cache
-?????
+
+A Memória Cache será implementada para simular a **hierarquia de memória**, reduzindo o tempo de acesso aos dados e instruções frequentemente utilizados. 
+
+A comunicação será feita entre o **MBR/MAR** (Registradores da Via de Dados) e a **Memória Principal**.
+### Função
+
+ * Armazenar temporariamente cópias de blocos de dados da Memória Principal para acelerar as operações de leitura e escrita.
+ * Intermediar as solicitações de acesso à memória feitas pelo processador.
+### Parâmetros de controle
+
+* **Tamanho da Cache:** 8 Linhas.
+* **Tamanho da Linha:** 4 Palavras (16 bits). 
+* **Política de Escrita:** Escrita imediata na memória principal.
+* **Política de Substituição:** Inerente ao **mapeamento direto**
+
+O endereço de memória tem 12 bits (4096 posições), a cache tem 8 linhas e cada linha guarda 4 palavras
+
+Para saber onde um dado da memória deve ir na cache, esse endereço é dividido em 3 partes:
+
+**Palavra (Offset):** 2 bits
+	Diz qual das 4 palavras dentro da linha de Cache está sendo buscada
+
+**Linha (Índice):** 3 bits
+	Diz em qual das 8 linhas da cache o bloco deve ser armazenado (local fixo)
+
+**Tag:** 7 bits
+	Identifica o bloco original da memória (importante pra verificar se o dado na cache é realmente o que está sendo procurado)
+
+#### Mapeamento direto
+
+- **Consulta:** O processador pede um dado pelo seu endereço (12 bits, que está no MAR)
+- **Divisão:** Cache usa os 3 bits do índice para saber qual das 8 linhas deve ser checada
+- **Verificação:**
+	- **Bit de validade:** hit/miss (se for 0 a linha está vazia)
+	- **Tag:** O valor 7 bits da Tag do endereço que está no MAR é comparado com a Tag que está armazenada na linha da Cache. Se forem iguais, o dado está aqui.
+- **Acesso ao Dado:** Se for for hit, os 2 bits de Offset indicam exata dentro da linha para pegar o dado
+
+O mapeamento direto garante que cada bloco da memória só pode ir para uma única linha da cache. Se algum bloco novo tentar usar uma linha que não está vazia, ele simplesmente substitui o bloco antigo sem perguntar.
+
+```
+ #define CACHE_SIZE 8
+ #define LINE_WORDS 4
+ #define TAG_BITS 7
+ #define LINE_BITS 3
+ #define WORD_BITS 2
+
+typedef struct cache_line {
+	int valid;
+	int tag[TAG_BITS];
+	int data[LINE_WORDS][16];
+} cache_line;
+
+typedef struct cache {
+	cache_line lines[CACHE_SIZE];
+} cache;
+```
+
 ### Montador
 traduzir o código de assembly pra binário
-
 ### Interface
