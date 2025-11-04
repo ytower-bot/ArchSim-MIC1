@@ -3,6 +3,34 @@
 
 - **Via de Dados**
 	- Registradores
+   		 - **Geral**
+        	 - Todos conceitualmente tem 32 bits
+         	 - Mas a implementação prática tem 16 bits porque os opcodes tem apenas 16 bits
+             - Recebem valores vindos do barramento C
+  		 - **PC:**
+       		 - Contém o endereço da próxima instrução a ser buscada e executada
+         	 - É incrementado a cada ciclo para apontar para a instrução seguinte
+		 - **AC:**
+     		 - Utilizado para guardar valores utilizados e resultados das operações
+  		 - **IR:**
+       		 - Contém o opcode da instrução mais recente buscada para que a Unidade de Controle a interprete
+         - **TIR:**
+  			 - Armazena o opcode macro instrução está sendo executado modificada por alguma operação
+  			 - Utilizado para analisar o opcode sem modificar o conteúdo do IR
+		 - **SP:**
+     		 - Aponta para o topo da pilha de execução (Vazia = 4096)
+         - **AMASK:**
+			 - Serve para isolar os 12 bits menos significativos
+  			 - Tem o valor 0000111111111111
+  		 - **SMASK:**
+       		 - Serve para extrair o valor dos 8 bits menos significativos
+         	 - Tem o valor 0000000011111111
+  		 - **0:**
+       		 - Sempre tem o valor 0000000000000000 (0)C2
+         - **+1:**
+  			 - Sempre tem o valor 0000000000000001 (1)C2
+  		 - **-1:**
+       		 - Sempre tem o valor 1111111111111111 (-1)C2
 	- ULA
 	- Latch A / B
 		- **Função**
