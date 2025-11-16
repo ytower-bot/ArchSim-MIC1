@@ -56,6 +56,8 @@ int is_cpu_halted(mic1_cpu* cpu);
 #define MIC1_ADDRESS_SIZE 12
 #define MIC1_MICROADDR_SIZE 8
 
+// Retirei a parte que define uma constante para cada registrador
+/*
 #define REG_PC    0
 #define REG_AC    1
 #define REG_SP    2
@@ -72,5 +74,6 @@ int is_cpu_halted(mic1_cpu* cpu);
 #define REG_D     13
 #define REG_E     14
 #define REG_F     15
+*/
 
 #endif

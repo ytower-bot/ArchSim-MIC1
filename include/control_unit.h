@@ -1,7 +1,7 @@
 #ifndef CONTROL_UNIT_H
 #define CONTROL_UNIT_H
 
-#define MICROPROGRAM_SIZE 256
+#define MICROPROGRAM_SIZE 79
 
 // AMUX multiplexer
 typedef struct amux {

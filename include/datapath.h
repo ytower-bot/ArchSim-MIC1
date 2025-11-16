@@ -7,8 +7,26 @@ typedef struct mic1_register {
 } mic1_register;
 
 // Register bank with 16 registers
+// Acho que fica mais fácil de acessar cada registrador assim
 typedef struct register_bank {
-    mic1_register registers[16];
+    //mic1_register registers[16];
+
+    mic1_register PC;
+    mic1_register AC;
+    mic1_register IR;
+    mic1_register TIR;
+    mic1_register SP;
+    mic1_register AMASK;
+    mic1_register SMASK;
+    mic1_register R0;
+    mic1_register R1;
+    mic1_register Rm1;
+    mic1_register A;
+    mic1_register B;
+    mic1_register C;
+    mic1_register D;
+    mic1_register E;
+    mic1_register F;
 } register_bank;
 
 // Latch structure
@@ -18,7 +36,8 @@ typedef struct latch {
 
 // Source register decoder
 typedef struct decoder {
-    mic1_register* registers[16];
+    register_bank *rb;
+    //mic1_register* registers[16];
     int control[4];
 } decoder;
 
