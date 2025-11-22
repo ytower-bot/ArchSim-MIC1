@@ -13,7 +13,7 @@ typedef struct shifter {
 #define SHIFT_UNUSED    0b11
 
 void set_shifter_input(shifter* s, int input[16]);
-void set_shifter_control(shifter* s, int control);
+void set_shifter_control(shifter* s, int control[2]);
 void lshift(shifter* s);
 void rshift(shifter* s);
 void init_shifter(shifter* s);
