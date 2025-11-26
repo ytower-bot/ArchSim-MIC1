@@ -7,8 +7,17 @@ int main(void){
 
     for (int i = 0; i < 4096; i++) {
         memory[i] = malloc(12 * sizeof(int));
-        if (memory[i] == NULL) return 1; 
+        if (memory[i] == NULL) return 1;
         for (int j = 0; j < 12; j++) {
             memory[i][j] = 0;
         }
     }
+
+    // Liberar memória alocada
+    for (int i = 0; i < 4096; i++) {
+        free(memory[i]);
+    }
+    free(memory);
+
+    return 0;
+}

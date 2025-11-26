@@ -10,11 +10,8 @@ void init_mic1(mic1_cpu* cpu) {
     cpu->running = 0;
     cpu->cycle_count = 0;
     cpu->clock = 0;
-    for (int i = 0; i < 16; i++) {
-        for (int j = 0; j < 16; j++) {
-            cpu->reg_bank.registers[i].data[j] = 0;
-        }
-    }
+
+    // Inicializar banco de registradores
     init_register_bank(&cpu->reg_bank);
     init_alu(&cpu->alu);
     init_cache(&cpu->cache);
@@ -61,13 +58,33 @@ void print_cpu_state(mic1_cpu* cpu) {
 void print_registers(mic1_cpu* cpu) {
     if (!cpu) return;
     printf("=== REGISTERS ===\n");
-    for (int i = 0; i < 16; i++) {
-        printf("R%02d: ", i);
-        for (int j = 0; j < 16; j++) {
-            printf("%d", cpu->reg_bank.registers[i].data[j]);
-        }
+
+    // Helper macro para imprimir um registrador
+    #define PRINT_REG(name, reg) \
+        printf("%-6s: ", name); \
+        for (int j = 0; j < 16; j++) { \
+            printf("%d", cpu->reg_bank.reg.data[j]); \
+        } \
         printf("\n");
-    }
+
+    PRINT_REG("PC", PC);
+    PRINT_REG("AC", AC);
+    PRINT_REG("IR", IR);
+    PRINT_REG("TIR", TIR);
+    PRINT_REG("SP", SP);
+    PRINT_REG("AMASK", AMASK);
+    PRINT_REG("SMASK", SMASK);
+    PRINT_REG("0", R0);
+    PRINT_REG("+1", R1);
+    PRINT_REG("-1", Rm1);
+    PRINT_REG("A", A);
+    PRINT_REG("B", B);
+    PRINT_REG("C", C);
+    PRINT_REG("D", D);
+    PRINT_REG("E", E);
+    PRINT_REG("F", F);
+
+    #undef PRINT_REG
     printf("================\n");
 }
 
@@ -109,7 +126,7 @@ int is_cpu_halted(mic1_cpu* cpu) {
 // Stub implementations for compilation
 
 // Datapath functions
-void init_register_bank(register_bank* rb) { if (!rb) return; }
+// init_register_bank implementada em datapath.c
 void init_decoder(decoder* d, register_bank* rb) { if (!d || !rb) return; }
 void init_decoderC(decoderC* d, register_bank* rb) { if (!d || !rb) return; }
 void run_decoder(decoder* d, latch* l) { if (!d || !l) return; }
@@ -145,7 +162,7 @@ void copy_data(int dest[16], int src[16]) { if (!dest || !src) return; }
 void init_shifter(shifter* s) { if (!s) return; }
 void run_shifter(shifter* s, mbr* b, barrC* c) { if (!s || !b || !c) return; }
 void set_shifter_input(shifter* s, int input[16]) { if (!s || !input) return; }
-void set_shifter_control(shifter* s, int control) { if (!s) return; }
+void set_shifter_control(shifter* s, int control[2]) { if (!s || !control) return; }
 void lshift(shifter* s) { if (!s) return; }
 void rshift(shifter* s) { if (!s) return; }
 int get_shifter_control_value(int control[2]) { if (!control) return 0; return 0; }
