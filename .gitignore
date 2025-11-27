@@ -53,3 +53,40 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Binary executables
+test_alu_binary
+*.out
+
+# CMake
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CMakeCache.txt
+
+# Build artifacts
+build/
+dist/
+.build/
+
+# Dependencies
+vendor/
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.log
