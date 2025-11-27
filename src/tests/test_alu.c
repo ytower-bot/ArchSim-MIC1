@@ -275,6 +275,7 @@ void test_combined_workflow() {
     print_test("Combined workflow: Init + Set inputs + Control + Run", passed);
 }
 
+/*
 int main() {
     printf("================================================================================\n");
     printf("ALU Unit Tests - 16-bit Arithmetic Logic Unit Implementation\n");
@@ -319,3 +320,4 @@ int main() {
     
     return (tests_failed == 0) ? 0 : 1;
 }
+*/

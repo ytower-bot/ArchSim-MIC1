@@ -65,6 +65,7 @@ dkms.conf
 # Binary executables
 test_alu_binary
 *.out
+mic1_simulator
 
 # CMake
 CMakeFiles/
