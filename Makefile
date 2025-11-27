@@ -16,8 +16,8 @@ TARGET = mic1_simulator
 
 # Source files
 # Excluir arquivos de teste/exemplo que têm seu próprio main()
-ALL_SOURCES = $(wildcard $(SRCDIR)/*.c)
-EXCLUDED = $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c
+ALL_SOURCES = $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/utils/*.c)
+EXCLUDED = $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c $(SRCDIR)/test_conversions.c
 SOURCES = $(filter-out $(EXCLUDED), $(ALL_SOURCES))
 OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
@@ -30,6 +30,7 @@ all: $(TARGET)
 # Create object directory if it doesn't exist
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
+	mkdir -p $(OBJDIR)/utils
 
 # Compile object files
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS) | $(OBJDIR)
