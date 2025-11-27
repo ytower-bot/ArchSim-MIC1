@@ -132,18 +132,7 @@ void init_decoderC(decoderC* d, register_bank* rb) { if (!d || !rb) return; }
 void run_decoder(decoder* d, latch* l) { if (!d || !l) return; }
 void run_decoderC(decoderC* d, shifter* s) { if (!d || !s) return; }
 
-// ALU functions
-void init_alu(alu* a) { if (!a) return; a->flag_n = 0; a->flag_z = 0; }
-void run_alu(alu* a) { if (!a) return; }
-void set_alu_inputs(alu* a, int input_a[16], int input_b[16]) { if (!a || !input_a || !input_b) return; }
-void set_alu_control(alu* a, int control) { if (!a) return; }
-void update_flags(alu* a) { if (!a) return; }
-void alu_add(alu* a) { if (!a) return; }
-void alu_and(alu* a) { if (!a) return; }
-void alu_pass_a(alu* a) { if (!a) return; }
-void alu_not_a(alu* a) { if (!a) return; }
-int is_zero(int data[16]) { if (!data) return 1; return 0; }
-int is_negative(int data[16]) { if (!data) return 0; return 0; }
+// ALU functions - implemented in src/alu.c
 
 // Memory functions
 void init_mar(mar* a) { if (!a) return; a->control_mar = 0; }
