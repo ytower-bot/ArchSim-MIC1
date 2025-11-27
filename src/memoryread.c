@@ -10,10 +10,3 @@ int returnadd(int instr[], int addstart){
     return result;
 }
 
-int main(void) {
-    int instr[16] = {1,0,1,0,1,0, 0, 0 ,1 ,0 ,1,0,0, 1, 1, 0}; //instrução a ser processada, estaria antes no código
-    int addstart = 4; //em qual dígito começa a ler o endereço
-    int address = returnadd(instr, addstart);
-    printf("%d\n", address);
-
-}
