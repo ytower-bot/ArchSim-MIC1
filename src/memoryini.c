@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(void){
+int memoryini(void){
     int **memory = malloc(4096 * sizeof(int *)); //alocação de mem
     if (memory == NULL) return 1;
 
@@ -20,4 +20,5 @@ int main(void){
     free(memory);
 
     return 0;
+
 }
