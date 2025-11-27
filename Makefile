@@ -17,7 +17,7 @@ TARGET = mic1_simulator
 # Source files
 # Excluir arquivos de teste/exemplo que têm seu próprio main()
 ALL_SOURCES = $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/utils/*.c)
-EXCLUDED = $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c $(SRCDIR)/test_conversions.c
+EXCLUDED = $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c $(SRCDIR)/$(TESTDIR)/test_alu.c $(SRCDIR)/$(TESTDIR)/test_conversions.c
 SOURCES = $(filter-out $(EXCLUDED), $(ALL_SOURCES))
 OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
