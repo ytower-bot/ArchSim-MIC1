@@ -132,11 +132,7 @@ int is_cpu_halted(mic1_cpu* cpu) {
 // ALU functions - implemented in src/alu.c
 
 // Memory functions - implemented in src/memory.c
-// init_mar, init_mbr, run_mar, run_mbr
-void init_memory(memory* mem) { if (!mem) return; }
-void m_read(mar* a, mbr* b, memory* mem) { if (!a || !b || !mem) return; }
-void m_write(mar* a, mbr* b, memory* mem) { if (!a || !b || !mem) return; }
-void load_program(memory* mem, const char* filename) { if (!mem || !filename) return; }
+// init_mar, init_mbr, run_mar, run_mbr, init_memory, m_read, m_write, load_program
 // address_to_int, int_to_address, copy_data - implemented in src/utils/conversions.c
 
 // Shifter functions - implemented in src/shifter.c
@@ -159,19 +155,4 @@ void run_amux(amux* a, mbr* b, latch* lA, alu* u) { if (!a || !b || !lA || !u) r
 void load_microprogram(control_memory* cm, const char* filename) { if (!cm || !filename) return; }
 // bits_to_int, int_to_bits - implemented in src/utils/conversions.c
 
-// Cache functions
-void init_cache(cache* c) { if (!c) return; c->hits = 0; c->misses = 0; for (int i = 0; i < CACHE_SIZE; i++) { c->lines[i].valid = 0; } }
-int cache_read(cache* c, struct memory* mem, int address[12], int data[16]) { if (!c || !mem || !address || !data) return 0; return 0; }
-void cache_write(cache* c, struct memory* mem, int address[12], int data[16]) { if (!c || !mem || !address || !data) return; }
-int cache_lookup(cache* c, address_fields* addr) { if (!c || !addr) return 0; return 0; }
-void cache_load_block(cache* c, struct memory* mem, address_fields* addr) { if (!c || !mem || !addr) return; }
-void decompose_address(int address[12], address_fields* addr) { if (!address || !addr) return; }
-int compare_tags(int tag1[TAG_BITS], int tag2[TAG_BITS]) { if (!tag1 || !tag2) return 0; return 0; }
-int line_index_to_int(int line[LINE_BITS]) { if (!line) return 0; return 0; }
-int word_offset_to_int(int word[WORD_BITS]) { if (!word) return 0; return 0; }
-void copy_tag(int dest[TAG_BITS], int src[TAG_BITS]) { if (!dest || !src) return; }
-void print_cache_stats(cache* c) { if (!c) return; printf("=== CACHE STATS ===\nHits: %d\nMisses: %d\nHit Rate: %.2f%%\n==================\n", c->hits, c->misses, get_hit_rate(c)); }
-void reset_cache_stats(cache* c) { if (!c) return; c->hits = 0; c->misses = 0; }
-double get_hit_rate(cache* c) { if (!c || (c->hits + c->misses) == 0) return 0.0; return ((double)c->hits / (c->hits + c->misses)) * 100.0; }
-void print_cache_line(cache_line* line, int line_num) { if (!line) return; printf("Line %d: %s\n", line_num, line->valid ? "VALID" : "INVALID"); }
-void print_cache_state(cache* c) { if (!c) return; printf("=== CACHE STATE ===\n"); for (int i = 0; i < CACHE_SIZE; i++) { print_cache_line(&c->lines[i], i); } printf("==================\n"); }
+// Cache functions - implemented in src/cache.c

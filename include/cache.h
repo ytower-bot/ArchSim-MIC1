@@ -1,6 +1,9 @@
 #ifndef CACHE_H
 #define CACHE_H
 
+// Forward declaration
+typedef struct memory memory;
+
 #define CACHE_SIZE 8
 #define LINE_WORDS 4
 #define TAG_BITS 7
@@ -28,10 +31,10 @@ typedef struct address_fields {
     int word[WORD_BITS];
 } address_fields;
 
-int cache_read(cache* c, struct memory* mem, int address[12], int data[16]);
-void cache_write(cache* c, struct memory* mem, int address[12], int data[16]);
+int cache_read(cache* c, memory* mem, int address[12], int data[16]);
+void cache_write(cache* c, memory* mem, int address[12], int data[16]);
 int cache_lookup(cache* c, address_fields* addr);
-void cache_load_block(cache* c, struct memory* mem, address_fields* addr);
+void cache_load_block(cache* c, memory* mem, address_fields* addr);
 void init_cache(cache* c);
 void decompose_address(int address[12], address_fields* addr);
 int compare_tags(int tag1[TAG_BITS], int tag2[TAG_BITS]);
