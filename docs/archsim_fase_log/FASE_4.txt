@@ -1,0 +1,71 @@
+═══════════════════════════════════════════════════════════════
+FASE_4 - AMUX COMPONENT (Parcial)
+═══════════════════════════════════════════════════════════════
+
+DATA: 28/11/2025
+STATUS: ⚠️ PARCIAL (1/4 componentes completos)
+
+OBJETIVO
+--------
+Implementar componentes da Unidade de Controle:
+- AMUX: Multiplexador para entrada A da ALU
+- MIR: Microinstruction Register (já implementado)
+- MPC: Microprogram Counter (já implementado)
+- MMUX: Micro Address Multiplexer (já implementado)
+
+TASKS IMPLEMENTADAS
+-------------------
+- [x] init_amux() - Inicialização com control_amux=0
+- [x] run_amux() - Seleção de fonte (Latch A ou MBR)
+- [x] Remover stubs de mic1.c
+- [x] Suite de testes completa (7/7 passando)
+- [x] Documentação Doxygen
+
+VALIDAÇÃO
+---------
+✓ Compilação sem warnings
+✓ Testes unitários: 7/7 PASS
+✓ Lógica de seleção: control=0 → Latch A, control=1 → MBR
+✓ Validação de ponteiros null
+✓ Integração com copy_data()
+
+COMMITS
+-------
+b5e7fbd - feat: implement FASE_4 - AMUX component
+
+ARQUIVOS MODIFICADOS
+--------------------
++ src/tests/test_amux.c (130 linhas)
+~ src/control_unit.c (+36 linhas)
+~ src/mic1.c (-2 linhas de stubs)
+
+TEMPO ESTIMADO: 1 hora
+TEMPO REAL: 30 minutos
+
+IMPACTO
+-------
+AMUX implementado permite que a ULA receba entrada A de duas fontes:
+- Latch A (dados de registrador)
+- MBR (dados vindos da memória)
+
+Esta é uma função crítica do datapath MIC-1, permitindo que microinstruções
+especifiquem se a operação da ALU deve usar um registrador ou um valor
+da memória.
+
+PRÓXIMOS PASSOS (FASE_4 completa)
+----------------------------------
+- [ ] Documentar interação AMUX ↔ MIR (sinal de controle bit[0])
+- [ ] Integrar run_amux() no ciclo de execução
+- [ ] Validar com microinstruções reais (quando ROM estiver pronta)
+
+FASE_4 ROADMAP (restante)
+--------------------------
+- [x] MIR: Decodificação de microinstruções (já implementado)
+- [x] MPC: Contador de microprograma (já implementado)  
+- [x] MMUX: Multiplexador de endereço (já implementado)
+- [x] AMUX: Multiplexador entrada ALU (implementado nesta sessão)
+- [ ] Microprograma básico (10-20 instruções)
+- [ ] Loader de microprograma
+- [ ] init_control_memory()
+
+STATUS GERAL DO PROJETO: ~50% completo
