@@ -239,3 +239,98 @@ void run_mir(mir* m, mbr* mb, mar* ma, mmux* mmu, amux* amu,
     // the next microinstruction address, but is accessed directly
     // from the MIR structure by run_mmux(), not copied here.
 }
+
+/**
+ * @brief Initialize Microprogram Counter (MPC) with zeros
+ *
+ * @param p Pointer to the MPC structure
+ *
+ * Initializes the MPC address field to zero (address = 0).
+ * This sets the starting point of microprogram execution.
+ */
+void init_mpc(mpc* p) {
+    if (!p) {
+        return;
+    }
+
+    // Initialize 8-bit address field to zero
+    for (int i = 0; i < 8; i++) {
+        p->address[i] = 0;
+    }
+}
+
+/**
+ * @brief Increment Microprogram Counter by 1
+ *
+ * @param p Pointer to the MPC structure
+ *
+ * Increments the MPC address by 1 (MPC = MPC + 1).
+ * Handles overflow: if address reaches 256, wraps back to 0.
+ *
+ * Implementation:
+ * 1. Convert address[8] bits to integer (0-255)
+ * 2. Increment the value
+ * 3. Handle overflow (256 -> 0)
+ * 4. Convert back to 8-bit array
+ *
+ * Example:
+ *   address = [0,0,0,0,0,1,0,1] (5 decimal)
+ *   After increment: [0,0,0,0,0,1,1,0] (6 decimal)
+ */
+void increment_mpc(mpc* p) {
+    if (!p) {
+        return;
+    }
+
+    // Convert address[8] to integer (0-255)
+    int addr = bits_to_int(p->address, 8);
+
+    // Increment with overflow handling
+    addr = (addr + 1) & 0xFF;  // Mask to 8 bits (0-255)
+
+    // Convert back to 8-bit array
+    int_to_bits(addr, p->address, 8);
+}
+
+/**
+ * @brief Fetch microinstruction from control memory and load into MIR
+ *
+ * @param p  Pointer to MPC structure (contains current microinstruction address)
+ * @param m  Pointer to MIR structure (destination for microinstruction)
+ * @param cm Pointer to control_memory structure (source of microinstructions)
+ *
+ * This function implements the microinstruction fetch cycle:
+ * 1. Read the current MPC address
+ * 2. Fetch the 32-bit microinstruction from control memory at that address
+ * 3. Load the microinstruction into MIR
+ *
+ * Control memory organization:
+ * - cm->microinstructions[0..78][0..31]: 79 microinstructions × 32 bits
+ * - MPC address range: 0-78 (valid), 79-255 (undefined behavior)
+ *
+ * Example:
+ *   MPC = 5 -> Fetch microinstructions[5] -> Load into MIR.data[32]
+ */
+void run_mpc(mpc* p, mir* m, control_memory* cm) {
+    // Validate pointers
+    if (!p || !m || !cm) {
+        return;
+    }
+
+    // Convert MPC address[8] to integer index (0-255)
+    int index = bits_to_int(p->address, 8);
+
+    // Bounds check: valid microprogram addresses are 0-78
+    if (index < 0 || index >= MICROPROGRAM_SIZE) {
+        // Invalid address: do nothing or set MIR to NOP (all zeros)
+        for (int i = 0; i < 32; i++) {
+            m->data[i] = 0;
+        }
+        return;
+    }
+
+    // Fetch microinstruction from control memory and load into MIR
+    for (int i = 0; i < 32; i++) {
+        m->data[i] = cm->microinstructions[index][i];
+    }
+}
