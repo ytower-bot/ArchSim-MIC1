@@ -1,70 +1,40 @@
-═══════════════════════════════════════════════════════════════
-FASE_2 - COMPONENTES DATAPATH
-═══════════════════════════════════════════════════════════════
-
-DATA: 27/11/2024
-STATUS: ✅ COMPLETA
+FASE 2 - COMPONENTES DO DATAPATH
+Data: 27/11/2025
+Status: Completa
 
 OBJETIVO
---------
-Implementar componentes essenciais do datapath: Shifter, Decoders e MAR/MBR.
+Implementar componentes essenciais do datapath: Shifter, Decoders, MAR/MBR.
 
 COMPONENTES IMPLEMENTADOS
---------------------------
 
-1. SHIFTER (src/shifter.c)
-   ✓ init_shifter() - Inicialização sem malloc (bug fix)
-   ✓ run_shifter() - Executa operação baseada em control_sh[2]
-   ✓ get_shifter_control_value() - Converte control para int
-   - Control: 00=nada, 01=left, 10=right, 11=unused
-   - Já existiam: lshift(), rshift(), set_shifter_input()
+Shifter
+- run_shifter() - Executa operação de deslocamento baseada em sinais de controle
+- get_shifter_control_value() - Converte array de controle para inteiro
+- Removido malloc desnecessário em init_shifter()
 
-2. DECODERS A/B (src/datapath.c)
-   ✓ run_decoder() - Já implementado
-   ✓ select_register() - Switch case 0-15 → ponteiro
-   ✓ Copia registrador selecionado → latch
+Decoders A/B
+- run_decoder() - Seleciona registrador e carrega em latch
+- select_register() - Mapeia endereço de 4 bits para ponteiro de registrador
+- Suporte para 16 registradores (PC, AC, SP, IR, TIR, constantes, temporários)
 
-3. DECODER C (src/datapath.c)
-   ✓ run_decoderC() - Write-back para registrador
-   ✓ Se ENC=1: escreve shifter data → registrador selecionado
-   ✓ Control C[4] seleciona registrador destino
+Decoder C
+- run_decoderC() - Escreve resultado no registrador selecionado
+- Validação do sinal ENC antes de escrever
+- Sinal de controle de 4 bits para seleção de registrador
 
-4. MAR/MBR (src/memory.c)
-   ✓ run_mar() - Já implementado
-   ✓ run_mbr() - Já implementado
-   ✓ Se RD=1: chama m_read()
-   ✓ Se WR=1: chama m_write()
-   ✓ Se MBR=1: copia shifter → MBR
-
-BUG FIXES
----------
-- init_shifter(): removido malloc desnecessário (mesmo bug FASE_0)
-- init_decoder(): tinha malloc desnecessário
-- init_decoderC(): tinha malloc desnecessário
-
-VALIDAÇÃO
----------
-✓ Compilação: Sucesso sem erros
-✓ Execução: ./mic1_simulator roda corretamente
-✓ Stubs removidos: mic1.c limpo
-
-COMMITS
--------
-(pendente) - feat: implement FASE_2 datapath components
+MAR/MBR
+- run_mar() - Carrega endereço do Latch B
+- run_mbr() - Gerencia operações de leitura/escrita na memória
+- Sinal RD: chama m_read() para carregar MBR da memória
+- Sinal WR: chama m_write() para armazenar MBR na memória
+- Sinal MBR: copia saída do shifter para MBR
 
 ARQUIVOS MODIFICADOS
---------------------
-~ src/shifter.c (+45 linhas - run_shifter, get_shifter_control_value)
-~ src/datapath.c (+45 linhas - run_decoderC)
-~ src/mic1.c (-3 stubs removidos)
-~ include/datapath.h (+1 declaração)
+- src/shifter.c (+45 linhas)
+- src/datapath.c (+45 linhas)
+- include/datapath.h (+1 declaração)
 
-TEMPO ESTIMADO: 4-6 horas
-TEMPO REAL: 30 minutos
-
-IMPACTO
--------
-- Datapath completo e funcional
-- Base para pipeline de execução
-- Comunicação registradores ↔ memória
-- Shifter operacional para ALU
+VALIDAÇÃO
+- Compilação bem-sucedida
+- Todos os componentes integrados
+- Sem erros em tempo de execução

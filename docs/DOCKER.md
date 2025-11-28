@@ -4,7 +4,7 @@ Este guia explica como usar o Docker para executar o simulador MIC-1.
 
 ---
 
-## 🐳 Pré-requisitos
+## Pré-requisitos
 
 **Instalar Docker:**
 - Linux: `sudo apt-get install docker.io`
@@ -13,7 +13,7 @@ Este guia explica como usar o Docker para executar o simulador MIC-1.
 
 ---
 
-## 🚀 Início Rápido
+## Início Rápido
 
 ### 1. Build da Imagem
 
@@ -73,7 +73,7 @@ cat README.md
 
 ---
 
-## 📋 Comandos Úteis
+## Comandos Úteis
 
 ### Executar Teste Único (Sem Shell Interativo)
 
@@ -121,7 +121,7 @@ docker container prune
 
 ---
 
-## 🔧 Estrutura do Container
+## Estrutura do Container
 
 ```
 /app/                     # Working directory
@@ -135,7 +135,7 @@ docker container prune
 
 ---
 
-## 🧪 Testando a Imagem
+## Testando a Imagem
 
 ### Verificar Compilação
 
@@ -165,7 +165,7 @@ gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Erro: "Cannot connect to Docker daemon"
 
@@ -208,7 +208,7 @@ docker run archsim-mic1      # Errado (sai imediatamente)
 
 ---
 
-## 📦 Distribuição
+## Distribuição
 
 ### Exportar Imagem
 
@@ -231,11 +231,12 @@ docker push username/archsim-mic1:v1.0
 
 ---
 
-## 🔗 Próximos Passos
+## Referências Adicionais
 
-- Ver [README.md](../README.md) para documentação completa
-- Ver [ASSEMBLER_GUIDE.md](ASSEMBLER_GUIDE.md) para usar o montador
-- Ver [ROADMAP.md](../ROADMAP.md) para status do projeto
+- [README.md](../README.md) - Documentação completa
+- [ASSEMBLER_GUIDE.md](ASSEMBLER_GUIDE.md) - Guia do montador
+- [ArchSim-MIC1.md](ArchSim-MIC1.md) - Documentação técnica detalhada
+- [ROADMAP.md](ROADMAP.md) - Status do projeto
 
 ---
 

@@ -4,20 +4,20 @@ Este guia explica como usar o montador assembly do simulador MIC-1.
 
 ---
 
-## 📋 Visão Geral
+## Visão Geral
 
 O montador converte programas em linguagem assembly MIC-1 para formato binário executável (16 bits por instrução).
 
 **Características:**
-- ✅ 8 instruções básicas
-- ✅ Labels simbólicos
-- ✅ Comentários (`;`)
-- ✅ Operandos decimais e hexadecimais
-- ✅ Two-pass assembler (coleta labels, gera código)
+- 8 instruções básicas
+- Labels simbólicos
+- Comentários (`;`)
+- Operandos decimais e hexadecimais
+- Two-pass assembler (coleta labels, gera código)
 
 ---
 
-## 🎯 Instruções Suportadas
+## Instruções Suportadas
 
 ### **Instruções de Memória (Direct Addressing)**
 
@@ -49,7 +49,7 @@ O montador converte programas em linguagem assembly MIC-1 para formato binário 
 
 ---
 
-## 📝 Sintaxe Assembly
+## Sintaxe Assembly
 
 ### **Formato Básico**
 
@@ -75,7 +75,7 @@ O montador converte programas em linguagem assembly MIC-1 para formato binário 
 
 ---
 
-## 💡 Exemplos
+## Exemplos
 
 ### **Exemplo 1: Programa Simples**
 
@@ -150,7 +150,7 @@ HALT
 
 ---
 
-## 🔨 Uso da API
+## Uso da API
 
 ### **Montar de String (Em Memória)**
 
@@ -195,7 +195,7 @@ if (assemble_file("program.asm", "program.bin") == 0) {
 
 ---
 
-## 🎓 Formato Binário
+## Formato Binário
 
 ### **Estrutura da Instrução (16 bits)**
 
@@ -215,7 +215,7 @@ if (assemble_file("program.asm", "program.bin") == 0) {
 
 ---
 
-## ⚠️ Limitações
+## Limitações
 
 1. **Operandos 8-bit:** Valores 0-255 apenas
 2. **Endereços de memória:** 0-255 (8 bits)
@@ -225,7 +225,7 @@ if (assemble_file("program.asm", "program.bin") == 0) {
 
 ---
 
-## 🐛 Erros Comuns
+## Erros Comuns
 
 ### **Erro: "Invalid opcode"**
 
@@ -266,7 +266,7 @@ LOCO 255  ; ✅ Máximo permitido
 
 ---
 
-## 📊 Tabela de Referência Rápida
+## Tabela de Referência Rápida
 
 | Operação | Assembly | Exemplo |
 |----------|----------|---------|
@@ -281,11 +281,12 @@ LOCO 255  ; ✅ Máximo permitido
 
 ---
 
-## 🔗 Próximos Passos
+## Referências Adicionais
 
-- Ver [README.md](../README.md) para visão geral do projeto
-- Ver [DOCKER.md](DOCKER.md) para executar no Docker
-- Ver exemplos em `test_assembler.c`
+- [README.md](../README.md) - Visão geral do projeto
+- [DOCKER.md](DOCKER.md) - Instruções Docker
+- [ArchSim-MIC1.md](ArchSim-MIC1.md) - Documentação técnica completa
+- `tests/test_assembler.c` - Exemplos de uso do montador
 
 ---
 

@@ -1,182 +1,65 @@
-═══════════════════════════════════════════════════════════════
-FASE_5 - EXECUTION CYCLE (FETCH-DECODE-EXECUTE-UPDATE)
-═══════════════════════════════════════════════════════════════
-
-DATA: 28/11/2025
-STATUS: ✅ COMPLETA
+FASE 5 - CICLO DE EXECUÇÃO
+Data: 28/11/2025
+Status: Completa
 
 OBJETIVO
---------
-Implementar o ciclo completo de execução MIC-1:
-- FETCH: Buscar microinstrução da Control Memory para MIR
-- EXECUTE: Executar operações do datapath
-- UPDATE: Atualizar MPC (branch ou incremento)
-- Integração completa de todos os componentes
+Implementar ciclo completo de execução de microinstrução: fetch, decode, execute, update.
 
-COMPONENTES IMPLEMENTADOS
---------------------------
-1. Control Unit Functions (src/control_unit.c):
-   - [x] fetch_microinstruction() - Busca microinstrução em MIR
-   - [x] update_control() - Atualiza MPC via MMUX
-   - [x] Declarações em include/control_unit.h
+CICLO DE EXECUÇÃO
 
-2. Datapath Execution (src/mic1.c):
-   - [x] execute_datapath() - Pipeline completo do datapath:
-         * Decoder A/B → Latch A/B
-         * AMUX → Seleção entrada ALU
-         * ALU → Operação aritmética/lógica
-         * MMUX → Atualização flags N/Z
-         * Shifter → Deslocamento
-         * Decoder C → Write-back (se ENC=1)
-         * MAR/MBR → Operações de memória
-   - [x] run_mic1_cycle() - Integração FETCH→EXECUTE→UPDATE
-   - [x] Declaração em include/mic1.h
+Fase Fetch
+- fetch_microinstruction() - Lê microinstrução da memória de controle no MPC
+- Copia para MIR para decodificação
+- Memória de controle indexada pelo valor atual do MPC
 
-3. Bug Fixes:
-   - [x] Decoder initialization in init_mic1()
-   - [x] Fixed init_decoder()/init_decoderC() malloc issue
-   - [x] Fixed duplicate increment in update_control()
+Fase Execute
+- execute_datapath() - Pipeline completo do datapath:
+  1. Decoder A: Seleciona registrador, carrega Latch A
+  2. Decoder B: Seleciona registrador, carrega Latch B
+  3. AMUX: Seleciona entrada da ALU (Latch A ou MBR)
+  4. ALU: Executa operação aritmética/lógica
+  5. MMUX: Atualiza flags N/Z baseado em resultado da ALU
+  6. Shifter: Desloca resultado da ALU esquerda/direita
+  7. Decoder C: Escreve resultado no registrador (se ENC=1)
+  8. MAR/MBR: Operações de memória (se RD=1 ou WR=1)
 
-VALIDAÇÃO
----------
-✓ Suite de Testes (src/tests/test_execution_cycle.c):
-  - test_init_mic1() - Inicialização correta
-  - test_load_microprogram() - Carregamento de 16 microinstruções
-  - test_fetch_nop() - Fetch de NOP (instrução 0)
-  - test_fetch_mar_pc() - Fetch de MAR←PC (instrução 1)
-  - test_update_control_sequential() - Incremento sequencial de MPC
-  - test_run_single_cycle() - Execução de 1 ciclo
-  - test_run_multiple_cycles() - Execução de 10 ciclos consecutivos
-  - test_execute_datapath_nop() - Datapath em NOP
-  - test_fetch_and_decode_ac_inc() - Decodificação AC←AC+1
+Fase Update
+- update_control() - Determina próximo MPC
+- MMUX avalia condições de desvio
+- Sequencial: MPC = MPC + 1
+- Desvio: MPC = ADDR da microinstrução
 
-✓ Resultados: 9/9 PASS (100%)
-✓ Compilação sem warnings (-Wall -Wextra -std=c99)
-✓ Todos os componentes integrados corretamente
-
-ARQUITETURA DO CICLO
---------------------
-run_mic1_cycle() {
-    1. FETCH: fetch_microinstruction(ctrl_mem, mpc, mir)
-       - Copia microinstrução[MPC] → MIR
-    
-    2. EXECUTE: execute_datapath(cpu)
-       - Extrai sinais de controle do MIR
-       - Decoder A/B: Registradores → Latches
-       - AMUX: Seleciona entrada ALU-A
-       - ALU: Executa operação F0/F1/ENA/ENB/INVA
-       - MMUX: Atualiza flags N/Z baseado em resultado ALU
-       - Shifter: Desloca resultado (SLL8/SRA1)
-       - Decoder C: Escreve resultado (se ENC=1)
-       - Memória: Operações MAR/MBR (se RD=1 ou WR=1)
-    
-    3. UPDATE: update_control(mpc, mmux, mir)
-       - MMUX decide: branch ou incremento
-       - Se COND satisfeita: MPC ← MIR.ADDR
-       - Senão: MPC ← MPC + 1
-    
-    4. Incrementa cycle_count e clock
-}
-
-ESTRUTURA DE MICROINSTRUÇÃO (MIR)
----------------------------------
-Campos decodificados em execute_datapath():
-- AMUX: [31] - Seleciona Latch A (0) ou MBR (1)
-- COND: [30:29] - Condição de branch (00=none, 01=N, 10=Z, 11=always)
-- ALU:  [28:27] - F1, F0
-- SH:   [26:25] - Shifter (00=none, 01=SRA1, 10=SLL8)
-- MBR:  [24] - Latch MBR ← resultado shifter
-- MAR:  [23] - Latch MAR ← resultado shifter
-- RD:   [22] - Read memory (MBR ← Memory[MAR])
-- WR:   [21] - Write memory (Memory[MAR] ← MBR)
-- ENC:  [20] - Enable decoder C write-back
-- C:    [19:16] - Decoder C register select
-- B:    [15:12] - Decoder B register select
-- A:    [11:8] - Decoder A register select
-- ADDR: [7:0] - Endereço de branch
-
-TESTES DETALHADOS
------------------
-Test 1: init_mic1
-  - CPU inicializada com running=0, cycle_count=0, clock=0
-  - MPC inicializado em 0
-  - Decoders apontam para register_bank
-  - Status: PASS
-
-Test 2: load_microprogram
-  - Carrega data/basic_microcode.txt (16 instruções)
-  - Primeira instrução: NOP (0x00000001)
-  - Status: PASS
-
-Test 3: fetch_microinstruction (NOP)
-  - MPC=0 → Busca instrução 0
-  - MIR recebe microinstrução corretamente
-  - Status: PASS
-
-Test 4: fetch_microinstruction (MAR←PC)
-  - MPC=1 → Busca instrução 1
-  - MIR atualizado com nova instrução
-  - Status: PASS
-
-Test 5: update_control (sequential)
-  - MMUX com COND=00 (never branch)
-  - MPC=0 → após update_control → MPC=1
-  - Status: PASS (fixed duplicate increment bug)
-
-Test 6: run_mic1_cycle (single)
-  - Executa 1 ciclo completo
-  - cycle_count=1, clock=1
-  - Status: PASS
-
-Test 7: run_mic1_cycle (multiple)
-  - Executa 10 ciclos consecutivos
-  - cycle_count=10, clock=10
-  - Status: PASS
-
-Test 8: execute_datapath (NOP)
-  - Executa datapath sem crashes
-  - NOP não modifica registradores
-  - Status: PASS
-
-Test 9: fetch_and_decode (AC←AC+1)
-  - Decodifica microinstrução AC increment
-  - Decoder A=1 (AC), Decoder B=6 (R1=0x0001)
-  - Decoder C=1 (AC), ENC=1
-  - ALU: ADD (F0=1, F1=1)
-  - Status: PASS
+Integração
+- run_mic1_cycle() - Executa ciclo completo
+- Incrementa contador de ciclos e relógio
+- Mantém consistência de estado da CPU
 
 BUGS CORRIGIDOS
----------------
-Bug #1: Decoder Initialization
-  Local: src/mic1.c :: init_mic1()
-  Problema: Decoders não tinham rb (register_bank) inicializado
-  Solução: Adicionado cpu->decoder_a/b/c.rb = &cpu->reg_bank
-  Impacto: Eliminado segfault ao acessar registradores
+- Inicialização de decoders em init_mic1()
+- Removido malloc em init_decoder/init_decoderC
+- Corrigido incremento duplicado de MPC em update_control()
 
-Bug #2: malloc in init_decoder()
-  Local: src/datapath.c :: init_decoder(), init_decoderC()
-  Problema: malloc() em ponteiro local não atualiza caller
-  Solução: Removido malloc (decoders são stack-allocated em mic1_cpu)
-  Impacto: Eliminado memory leak e segfault
+ARQUIVOS MODIFICADOS
+- src/mic1.c (+100 linhas)
+- src/control_unit.c (+55 linhas)
+- src/datapath.c (correções de bugs)
+- include/mic1.h (+1 declaração)
+- include/control_unit.h (+2 declarações)
 
-Bug #3: Duplicate MPC Increment
-  Local: src/control_unit.c :: update_control()
-  Problema: run_mmux() já incrementa, mas update_control() incrementava novamente
-  Solução: Removida lógica duplicada, mantido apenas run_mmux()
-  Impacto: MPC agora incrementa corretamente (1x por ciclo)
+ARQUIVOS CRIADOS
+- src/tests/test_execution_cycle.c (160 linhas, 9 testes)
 
-PRÓXIMOS PASSOS (FASE_6)
--------------------------
-[ ] Integração com cache L1/L2
-[ ] Implementar instruções ISA MIC-1 completo
-[ ] Assembler para bytecode MIC-1
-[ ] Debugger step-by-step
-[ ] Performance profiling
+VALIDAÇÃO
+Testes: 9/9 passando (100%)
+- Inicialização da CPU verificada
+- Carregamento de microprograma funcional
+- Operação de fetch correta
+- Execução sequencial verificada
+- Execução multi-ciclo estável
+- Operações do datapath funcionais
+- Operações de decodificação precisas
 
-COMMITS
--------
-d705ead - feat: implement FASE_5 - complete execution cycle (fetch-decode-execute-update)
+Compilação limpa com -Wall -Wextra -std=c99
 
-═══════════════════════════════════════════════════════════════
-FASE_5 COMPLETA - 100% TESTES PASSANDO
-═══════════════════════════════════════════════════════════════
+COMMIT
+d705ead - feat: implement complete execution cycle

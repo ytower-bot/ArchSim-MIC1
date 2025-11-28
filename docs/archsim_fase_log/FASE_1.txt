@@ -1,77 +1,29 @@
-═══════════════════════════════════════════════════════════════
-FASE_1 - FUNÇÕES DE CONVERSÃO
-═══════════════════════════════════════════════════════════════
-
-DATA: 27/11/2024
-STATUS: ✅ COMPLETA
+FASE 1 - UTILITÁRIOS DE CONVERSÃO
+Data: 27/11/2025
+Status: Completa
 
 OBJETIVO
---------
-Implementar 5 funções utilitárias de conversão entre bits e inteiros para
-suportar operações básicas da arquitetura MIC-1.
+Implementar funções utilitárias para conversões bit/inteiro usadas em toda arquitetura.
 
 FUNÇÕES IMPLEMENTADAS
----------------------
+- bits_to_int(bits[], size) - Converte array de bits para inteiro
+- int_to_bits(value, bits[], size) - Converte inteiro para array de bits
+- address_to_int(address[12]) - Converte endereço de 12 bits para inteiro (0-4095)
+- int_to_address(addr, address[12]) - Converte inteiro para endereço de 12 bits
+- copy_data(dest[16], src[16]) - Copia arrays de dados de 16 bits
 
-1. bits_to_int(int bits[], int size)
-   - Converte array de bits (tamanho variável) para inteiro
-   - Endianess: bit[0] = MSB
-   - Validação: ponteiro e size
-   
-2. int_to_bits(int value, int bits[], int size)
-   - Converte inteiro para array de bits (tamanho variável)
-   - Endianess: bit[0] = MSB
-   - Validação: ponteiro e size
-   
-3. address_to_int(int address[12])
-   - Converte endereço de 12 bits para inteiro (0-4095)
-   - Usa bits_to_int() internamente
-   - Validação: ponteiro
-   
-4. int_to_address(int addr, int address[12])
-   - Converte inteiro para endereço de 12 bits
-   - Usa int_to_bits() internamente
-   - Validação: ponteiro
-   
-5. copy_data(int dest[16], int src[16])
-   - Copia array de 16 bits (src → dest)
-   - Loop manual para compatibilidade
-   - Validação: ambos ponteiros
-
-TESTES
-------
-✓ bits_to_int: 4 casos (2, 5, 15, 255)
-✓ int_to_bits: 3 casos (2, 5, 15)
-✓ address_to_int: 3 casos (0, 4095, 20)
-✓ int_to_address: 3 casos (0, 4095, 20)
-✓ copy_data: 1 caso (cópia completa de array)
-
-RESULTADO: 9/9 testes passaram
+ARQUIVOS CRIADOS
+- include/utils/conversions.h (declarações de funções)
+- src/utils/conversions.c (implementações)
+- src/tests/test_conversions.c (testes unitários)
 
 VALIDAÇÃO
----------
-✓ Compilação: Sucesso sem erros
-✓ Testes unitários: 100% passaram
-✓ Documentação: Completa em cada função
-✓ Código limpo: Sem warnings
+Testes unitários: 9/9 passando
+- Conversão de array de bits para inteiro
+- Conversão de inteiro para array de bits
+- Conversões de endereço de 12 bits
+- Cópia de arrays de dados
+- Casos extremos (0, valores máximos, números negativos)
 
-COMMITS
--------
-4611bef - feat: implement FASE_1 conversion functions for MIC-1 architecture
-
-ARQUIVOS MODIFICADOS
---------------------
-+ include/utils/conversions.h (9 linhas - declarações)
-+ src/utils/conversions.c (122 linhas - implementações)
-+ src/tests/test_conversions.c (122 linhas - novos testes)
-- src/mic1.c (5 stubs removidos)
-
-TEMPO ESTIMADO: 2 horas
-TEMPO REAL: 1.5 horas
-
-IMPACTO
--------
-- Base sólida para ALU, Shifter e Memory
-- Funções reutilizáveis em todas as fases
-- Cobertura de testes completa
-- Código bem documentado e validado
+COMMIT
+4611bef - feat: implement conversion utilities

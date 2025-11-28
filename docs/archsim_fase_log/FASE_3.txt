@@ -1,71 +1,51 @@
-═══════════════════════════════════════════════════════════════
-FASE_3 - SISTEMA DE MEMÓRIA
-═══════════════════════════════════════════════════════════════
-
-DATA: 27/11/2024
-STATUS: ✅ COMPLETA
+FASE 3 - SISTEMA DE MEMÓRIA
+Data: 27/11/2025
+Status: Completa
 
 OBJETIVO
---------
-Implementar sistema completo de memória: principal + cache com hit/miss.
+Implementar memória principal e subsistema de cache com rastreamento de hits/misses.
 
-COMPONENTES IMPLEMENTADOS
---------------------------
+MEMÓRIA PRINCIPAL
+- init_memory() - Inicializa array de memória 4096 × 16 bits
+- m_read() - Lê palavra da memória no endereço MAR
+- m_write() - Escreve palavra MBR na memória no endereço MAR
+- load_program() - Carrega arquivo binário na memória
+- Validação de endereço (intervalo 0-4095)
 
-1. MEMÓRIA PRINCIPAL (src/memory.c)
-   ✓ init_memory() - Zera 4096 × 16 bits
-   ✓ m_read() - Converte MAR[12] → índice, copia memory[addr] → MBR
-   ✓ m_write() - Converte MAR[12] → índice, copia MBR → memory[addr]
-   ✓ load_program() - Carrega arquivo binário na memória
-   - Validação de range (0-4095)
-   - Tratamento de erros
-
-2. CACHE (src/cache.c) - NOVO ARQUIVO
-   ✓ init_cache() - Inicializa 8 linhas, valid=0
-   ✓ decompose_address() - Tag(7), Line(3), Word(2)
-   ✓ compare_tags() - Compara 7 bits
-   ✓ cache_lookup() - Verifica valid + tag, atualiza hits/misses
-   ✓ cache_load_block() - Carrega 4 palavras da memória
-   ✓ cache_read() - Lookup, se miss carrega bloco
-   ✓ cache_write() - Write-through: memória + cache
-   ✓ Funções auxiliares: line_index_to_int, word_offset_to_int, copy_tag
-   ✓ Estatísticas: print_cache_stats, get_hit_rate, reset_cache_stats
-   ✓ Debug: print_cache_line, print_cache_state
-
-ARQUITETURA DO CACHE
----------------------
-- Tamanho: 8 linhas
-- Linha: 4 palavras de 16 bits
+SISTEMA DE CACHE
+Organização:
+- 8 linhas de cache
+- 4 palavras por linha
 - Mapeamento direto
-- Endereço: tag[7] | line[3] | word[2]
-- Política: Write-through
-- Estatísticas: hits, misses, hit rate
+- Política write-through
+
+Funções:
+- init_cache() - Inicializa todas as linhas, define valid=0
+- decompose_address() - Divide endereço de 12 bits em Tag(7) | Line(3) | Word(2)
+- compare_tags() - Compara valores de tag de 7 bits
+- cache_lookup() - Verifica se dado está na cache, atualiza contadores hit/miss
+- cache_load_block() - Carrega bloco de 4 palavras da memória
+- cache_read() - Lê com lookup na cache, carrega em miss
+- cache_write() - Write-through para memória e cache
+- print_cache_stats() - Exibe estatísticas de hit/miss
+- get_hit_rate() - Calcula porcentagem de hits
+- reset_cache_stats() - Limpa contadores
+
+Estrutura da Cache:
+- Bit válido para cada linha
+- Tag de 7 bits para identificação de bloco
+- 4 palavras de dados de 16 bits
+- Contadores de hit/miss
+
+ARQUIVOS CRIADOS
+- src/cache.c (290 linhas)
+
+ARQUIVOS MODIFICADOS
+- src/memory.c (+104 linhas)
+- include/cache.h (+1 declaração forward)
 
 VALIDAÇÃO
----------
-✓ Compilação: Sucesso sem erros
-✓ Execução: Simulador roda corretamente
-✓ Memória: 4096 palavras inicializadas
-✓ Cache: 8 linhas com estrutura correta
-
-COMMITS
--------
-(pendente) - implement memory system with cache support
-
-ARQUIVOS CRIADOS/MODIFICADOS
------------------------------
-+ src/cache.c (290 linhas - implementação completa)
-~ src/memory.c (+104 linhas - m_read, m_write, init_memory, load_program)
-~ src/mic1.c (-19 stubs removidos)
-~ include/cache.h (+1 forward declaration)
-
-TEMPO ESTIMADO: 4-5 horas
-TEMPO REAL: 45 minutos
-
-IMPACTO
--------
-- Sistema de memória completo e funcional
-- Cache implementado com hit/miss tracking
-- Base para testes de performance
-- Suporte a load/store de programas
-- Write-through garante consistência
+- Operações de leitura/escrita na memória funcionais
+- Detecção de hit/miss da cache funcionando
+- Rastreamento de estatísticas preciso
+- Mapeamento direto verificado
