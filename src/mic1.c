@@ -140,12 +140,10 @@ int is_cpu_halted(mic1_cpu* cpu) {
 // run_shifter, get_shifter_control_value - implemented in src/shifter.c
 
 // Control unit functions
-// Note: init_mir(), run_mir(), decode_microinstruction(), init_mpc(), run_mpc(), increment_mpc() - implemented in control_unit.c
-void init_mmux(mmux* m) { if (!m) return; }
+// Note: init_mir(), run_mir(), decode_microinstruction(), init_mpc(), run_mpc(), 
+//       increment_mpc(), init_mmux(), run_mmux(), should_branch() - implemented in control_unit.c
 void init_amux(amux* a) { if (!a) return; }
 void init_control_memory(control_memory* cm) { if (!cm) return; }
-void run_mmux(mmux* m, mpc* p, mir* mir) { if (!m || !p || !mir) return; }
-int should_branch(mmux* m) { if (!m) return 0; return 0; }
 void run_amux(amux* a, mbr* b, latch* lA, alu* u) { if (!a || !b || !lA || !u) return; }
 void load_microprogram(control_memory* cm, const char* filename) { if (!cm || !filename) return; }
 // bits_to_int, int_to_bits - implemented in src/utils/conversions.c

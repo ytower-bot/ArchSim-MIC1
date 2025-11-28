@@ -334,3 +334,117 @@ void run_mpc(mpc* p, mir* m, control_memory* cm) {
         m->data[i] = cm->microinstructions[index][i];
     }
 }
+
+/**
+ * @brief Initialize Microaddress Multiplexer (MMUX) with zeros
+ *
+ * @param m Pointer to the MMUX structure
+ *
+ * Initializes all fields of the MMUX structure to zero:
+ * - control_cond[2]: Condition control signals (COND bits)
+ * - alu_n: ALU negative flag
+ * - alu_z: ALU zero flag
+ */
+void init_mmux(mmux* m) {
+    if (!m) {
+        return;
+    }
+
+    // Initialize condition control bits
+    m->control_cond[0] = 0;
+    m->control_cond[1] = 0;
+
+    // Initialize ALU flags
+    m->alu_n = 0;
+    m->alu_z = 0;
+}
+
+/**
+ * @brief Evaluate if a branch should be taken
+ *
+ * @param m Pointer to the MMUX structure
+ *
+ * @return 1 if branch should be taken, 0 otherwise
+ *
+ * Evaluates the branch condition based on control_cond[2] and ALU flags:
+ * - COND_NONE (0b00): Never branch -> return 0
+ * - COND_IF_N (0b01): Branch if N=1 -> return alu_n
+ * - COND_IF_Z (0b10): Branch if Z=1 -> return alu_z
+ * - COND_ALWAYS (0b11): Always branch -> return 1
+ *
+ * Example:
+ *   m->control_cond = [0,1] (COND_IF_N), m->alu_n = 1 -> returns 1
+ *   m->control_cond = [1,0] (COND_IF_Z), m->alu_z = 0 -> returns 0
+ */
+int should_branch(mmux* m) {
+    if (!m) {
+        return 0;
+    }
+
+    // Convert control_cond[2] to integer (0-3)
+    int cond = bits_to_int(m->control_cond, 2);
+
+    // Evaluate branch condition
+    switch (cond) {
+        case COND_NONE:     // 0b00 - Never branch
+            return 0;
+        
+        case COND_IF_N:     // 0b01 - Branch if N=1
+            return m->alu_n;
+        
+        case COND_IF_Z:     // 0b10 - Branch if Z=1
+            return m->alu_z;
+        
+        case COND_ALWAYS:   // 0b11 - Always branch
+            return 1;
+        
+        default:
+            return 0;
+    }
+}
+
+/**
+ * @brief Execute MMUX operation - Select next microinstruction address
+ *
+ * @param m   Pointer to MMUX structure
+ * @param p   Pointer to MPC structure (updated with next address)
+ * @param mir Pointer to MIR structure (contains ADDR field)
+ *
+ * This function decides the next microinstruction address based on branch condition:
+ * 
+ * If should_branch() returns 1 (branch taken):
+ *   - Load mir->addr[8] into mpc->address[8]
+ *   - MPC = ADDR from MIR (jump to branch target)
+ * 
+ * If should_branch() returns 0 (no branch):
+ *   - Call increment_mpc() to add 1 to MPC
+ *   - MPC = MPC + 1 (sequential execution)
+ *
+ * Example:
+ *   // Branch taken
+ *   mir->addr = [0,0,1,0,1,0,0,0] (address 40)
+ *   should_branch() = 1
+ *   -> mpc->address = [0,0,1,0,1,0,0,0] (jump to 40)
+ *
+ *   // No branch
+ *   mpc->address = [0,0,0,0,0,1,0,1] (address 5)
+ *   should_branch() = 0
+ *   -> mpc->address = [0,0,0,0,0,1,1,0] (increment to 6)
+ */
+void run_mmux(mmux* m, mpc* p, mir* mir) {
+    // Validate pointers
+    if (!m || !p || !mir) {
+        return;
+    }
+
+    // Decide if branch should be taken
+    if (should_branch(m)) {
+        // Branch: Load ADDR from MIR into MPC
+        for (int i = 0; i < 8; i++) {
+            p->address[i] = mir->addr[i];
+        }
+    } else {
+        // No branch: Increment MPC (sequential execution)
+        increment_mpc(p);
+    }
+}
