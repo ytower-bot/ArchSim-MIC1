@@ -173,13 +173,21 @@ LABEL:  LODD 100    ; Load direto: AC <- Memory[100]
 
 ### Exemplos de Programas
 
-O diretório `examples/` contém programas assembly prontos:
+O diretório `examples/` contém 9 programas assembly prontos para teste:
 
 ```bash
-examples/sum.asm         # Soma de dois números
-examples/loop.asm        # Loop com contador
-examples/maximum.asm     # Encontra valor máximo
+examples/constant.asm    # Carrega constante simples (3 instruções)
+examples/double.asm      # Multiplica por 2 via soma (5 instruções)
+examples/subtract.asm    # Subtração de dois números (8 instruções)
+examples/sum.asm         # Soma de dois números (8 instruções)
+examples/sequence.asm    # Sequência de valores (7 instruções)
+examples/jump.asm        # Jump incondicional (7 instruções)
+examples/zero_test.asm   # Teste condicional JZER (10 instruções)
+examples/maximum.asm     # Máximo entre dois números (13 instruções)
+examples/loop.asm        # Loop decrescente (5 instruções)
 ```
+
+**Recomendados para demonstração:** constant.asm, double.asm, subtract.asm, sum.asm
 
 ### API do Montador
 
