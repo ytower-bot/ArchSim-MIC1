@@ -63,7 +63,8 @@ dkms.conf
 .DS_Store
 
 # Binary executables
-test_alu_binary
+test*
+test*.c
 *.out
 mic1_simulator
 
