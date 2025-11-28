@@ -50,6 +50,11 @@ $(TARGET): $(OBJECTS)
 	@echo "[LD] $@"
 	@$(CC) $(OBJECTS) -o $(TARGET)
 
+# Create static library for CGO
+$(OBJDIR)/libmic1.a: $(LIB_OBJECTS)
+	@echo "[AR] $@"
+	@ar rcs $@ $(LIB_OBJECTS)
+
 # Debug build
 debug: CFLAGS += $(DEBUGFLAGS)
 debug: clean $(TARGET)
@@ -86,7 +91,7 @@ clean:
 	@echo "[CLEAN] Object files and test binaries removed"
 
 # Clean everything
-fclean: clean
+fclean: clean tui-clean
 	@rm -f $(TARGET)
 	@echo "[CLEAN] All build artifacts removed"
 
@@ -120,6 +125,9 @@ help:
 	@echo "  debug        - Build with debug symbols"
 	@echo "  test         - Build and run all tests"
 	@echo "  run          - Build and run simulator"
+	@echo "  tui          - Build TUI"
+	@echo "  tui-run      - Build and run TUI"
+	@echo "  tui-clean    - Remove TUI binary"
 	@echo "  clean        - Remove object files and test binaries"
 	@echo "  fclean       - Remove all build artifacts"
 	@echo "  re           - Rebuild everything"
@@ -129,5 +137,22 @@ help:
 	@echo "  docker-shell - Start Docker shell"
 	@echo "  help         - Show this help"
 
+# TUI targets
+TUI_DIR = tui
+TUI_BIN = $(TUI_DIR)/archsim-tui
+GO = $(HOME)/go/bin/go
+
+tui: $(OBJDIR)/libmic1.a
+	@echo "[GO] Building TUI..."
+	@cd $(TUI_DIR) && $(GO) build -o archsim-tui
+	@echo "[OK] TUI built successfully: $(TUI_BIN)"
+
+tui-run: tui
+	@cd $(TUI_DIR) && ./archsim-tui
+
+tui-clean:
+	@rm -f $(TUI_BIN)
+	@echo "[CLEAN] TUI binary removed"
+
 # Phony targets
-.PHONY: all debug test run clean fclean re install docker-build docker-test docker-shell help
+.PHONY: all debug test run clean fclean re install docker-build docker-test docker-shell help tui tui-run tui-clean

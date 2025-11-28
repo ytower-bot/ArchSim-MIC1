@@ -279,11 +279,10 @@ int pass1(assembler_t* as, const char* source) {
 
 // Pass 2: Generate code
 int pass2(assembler_t* as, uint16_t* output) {
+    (void)output; // Unused parameter - function incomplete
+    
     as->current_address = 0;
     as->instruction_count = 0;
-    
-    char line[MAX_LINE_LENGTH];
-    const char* ptr = (const char*)as; // Placeholder - need to save source
     
     // For now, this is incomplete - need to re-read source
     // Will complete in next iteration
