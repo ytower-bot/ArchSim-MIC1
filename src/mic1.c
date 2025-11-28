@@ -125,21 +125,15 @@ int is_cpu_halted(mic1_cpu* cpu) {
 
 // Stub implementations for compilation
 
-// Datapath functions
-// init_register_bank implementada em datapath.c
-void init_decoder(decoder* d, register_bank* rb) { if (!d || !rb) return; }
-void init_decoderC(decoderC* d, register_bank* rb) { if (!d || !rb) return; }
-void run_decoder(decoder* d, latch* l) { if (!d || !l) return; }
+// Datapath functions - implemented in src/datapath.c
+// init_register_bank, init_decoder, init_decoderC, run_decoder
 void run_decoderC(decoderC* d, shifter* s) { if (!d || !s) return; }
 
 // ALU functions - implemented in src/alu.c
 
-// Memory functions
-void init_mar(mar* a) { if (!a) return; a->control_mar = 0; }
-void init_mbr(mbr* b) { if (!b) return; b->control_rd = 0; b->control_wr = 0; b->control_mbr = 0; }
+// Memory functions - implemented in src/memory.c
+// init_mar, init_mbr, run_mar, run_mbr
 void init_memory(memory* mem) { if (!mem) return; }
-void run_mar(mar* a, struct latch* lB) { if (!a || !lB) return; }
-void run_mbr(mar* a, mbr* b, memory* mem) { if (!a || !b || !mem) return; }
 void m_read(mar* a, mbr* b, memory* mem) { if (!a || !b || !mem) return; }
 void m_write(mar* a, mbr* b, memory* mem) { if (!a || !b || !mem) return; }
 void load_program(memory* mem, const char* filename) { if (!mem || !filename) return; }
@@ -147,13 +141,9 @@ int address_to_int(int address[12]) { if (!address) return 0; return 0; }
 void int_to_address(int addr, int address[12]) { if (!address) return; }
 void copy_data(int dest[16], int src[16]) { if (!dest || !src) return; }
 
-// Shifter functions
-void init_shifter(shifter* s) { if (!s) return; }
+// Shifter functions - implemented in src/shifter.c
+// init_shifter, lshift, rshift, set_shifter_input, set_shifter_control
 void run_shifter(shifter* s, mbr* b, barrC* c) { if (!s || !b || !c) return; }
-void set_shifter_input(shifter* s, int input[16]) { if (!s || !input) return; }
-void set_shifter_control(shifter* s, int control[2]) { if (!s || !control) return; }
-void lshift(shifter* s) { if (!s) return; }
-void rshift(shifter* s) { if (!s) return; }
 int get_shifter_control_value(int control[2]) { if (!control) return 0; return 0; }
 
 // Control unit functions

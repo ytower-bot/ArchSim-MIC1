@@ -1,6 +1,9 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include "datapath.h"
+#include "shifter.h"
+
 #define MEMORY_SIZE 4096
 
 // Memory Address Register
@@ -22,7 +25,7 @@ typedef struct memory {
     int data[MEMORY_SIZE][16];
 } memory;
 
-void run_mar(mar* a, struct latch* lB);
+void run_mar(mar* a, latch* lB);
 void init_mar(mar* a);
 void run_mbr(mar* a, mbr* b, memory* mem, shifter* s);
 void m_read(mar* a, mbr* b, memory* mem);
