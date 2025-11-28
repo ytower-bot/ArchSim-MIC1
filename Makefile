@@ -76,19 +76,35 @@ install: $(TARGET)
 	cp $(TARGET) /usr/local/bin/
 	@echo "📦 MIC-1 Simulator installed to /usr/local/bin/"
 
+# Docker targets
+docker-build:
+	@echo "🐳 Building Docker image..."
+	docker build -t mic1-simulator .
+
+docker-test: docker-build
+	@echo "🐳 Testing Docker image..."
+	docker run --rm mic1-simulator
+
+docker-shell: docker-build
+	@echo "🐳 Starting Docker shell..."
+	docker run --rm -it mic1-simulator /bin/bash
+
 # Show help
 help:
 	@echo "MIC-1 Simulator Build System"
 	@echo "Available targets:"
-	@echo "  all     - Build the simulator (default)"
-	@echo "  debug   - Build with debug symbols"
-	@echo "  test    - Build and run tests"
-	@echo "  run     - Build and run simulator"
-	@echo "  clean   - Remove object files"
-	@echo "  fclean  - Remove all build files"
-	@echo "  re      - Rebuild everything"
-	@echo "  install - Install to system path"
-	@echo "  help    - Show this help"
+	@echo "  all          - Build the simulator (default)"
+	@echo "  debug        - Build with debug symbols"
+	@echo "  test         - Build and run tests"
+	@echo "  run          - Build and run simulator"
+	@echo "  clean        - Remove object files"
+	@echo "  fclean       - Remove all build files"
+	@echo "  re           - Rebuild everything"
+	@echo "  install      - Install to system path"
+	@echo "  docker-build - Build Docker image"
+	@echo "  docker-test  - Build and test in Docker"
+	@echo "  docker-shell - Start Docker shell"
+	@echo "  help         - Show this help"
 
 # Phony targets
-.PHONY: all debug test run clean fclean re install help
+.PHONY: all debug test run clean fclean re install docker-build docker-test docker-shell help

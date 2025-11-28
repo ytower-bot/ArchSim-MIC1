@@ -1,0 +1,24 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+obj/
+*.o
+mic1_simulator
+test_conversions
+
+# Documentation
+docs/
+*.md
+*.txt
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Test files
+tests/

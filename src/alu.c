@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdint.h>
 #include "../include/alu.h"
 
 void init_alu(alu* a) {
