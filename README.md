@@ -94,6 +94,58 @@ make debug
 make clean
 ```
 
+## Interface Visual (TUI)
+
+O projeto inclui uma Terminal User Interface (TUI) para visualização e execução interativa de programas.
+
+### Compilando a TUI
+
+```bash
+# Compilar backend C e TUI
+make all
+make tui
+```
+
+### Executando
+
+```bash
+# Executar com um programa
+./tui/archsim-tui examples/sum.asm
+
+# Ou executar sem argumentos e carregar depois
+./tui/archsim-tui
+```
+
+### Interface
+
+A TUI é dividida em dois painéis:
+
+**Painel Esquerdo - Código Fonte**
+- Código assembly carregado
+- Instrução atual marcada com `->`
+- Numeração de linhas
+
+**Painel Direito - Estado da CPU**
+- Status de execução (RUNNING/STOPPED)
+- Contadores de ciclos e clock
+- Valores dos registradores (PC, AC, SP, IR, TIR)
+- Estado da unidade de controle (MPC, flags N e Z)
+- Conteúdo de memória em endereços relevantes
+- Estatísticas de cache (taxa de hit)
+
+### Controles
+
+| Tecla | Ação |
+|-------|------|
+| `s` | Executar um ciclo |
+| `r` | Executar continuamente / Pausar |
+| `x` | Resetar CPU |
+| `l` | Carregar arquivo padrão |
+| `h` ou `?` | Mostrar/ocultar ajuda |
+| `q` ou `Ctrl+C` | Sair |
+
+Para mais detalhes, veja [tui/README.md](tui/README.md).
+
 ## Uso do Montador
 
 ### Sintaxe Assembly
@@ -234,6 +286,13 @@ ArchSim-MIC1/
 │   ├── shifter.c
 │   └── utils/
 │       └── conversions.c
+├── tui/                  # Terminal User Interface
+│   ├── main.go          # Ponto de entrada TUI
+│   ├── model.go         # Estado e lógica
+│   ├── view.go          # Renderização
+│   ├── update.go        # Handlers de eventos
+│   ├── cgo_wrapper.go   # Integração C/Go
+│   └── README.md        # Documentação TUI
 ├── tests/                # Testes automatizados
 │   ├── test_assembler.c
 │   ├── test_cache_separation.c
@@ -289,15 +348,16 @@ O diretório `examples/` contém programas assembly funcionais que demonstram o 
 - Unidade de controle microprogramada (MIR, MPC, MMUX)
 - Sistema de memória hierárquico (memória principal + caches)
 - Montador assembly com 8 instruções
+- Terminal User Interface (TUI) interativa
 - Suite de testes automatizados
 - Containerização Docker
 - Documentação completa
 
-### Em Desenvolvimento
+### Melhorias Futuras
 
-- Interface gráfica para visualização
 - Programas exemplo adicionais
 - Ferramentas de debug avançadas
+- Exportação de trace de execução
 
 ## Contribuindo
 

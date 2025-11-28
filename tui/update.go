@@ -80,30 +80,9 @@ func (m model) handleReset() model {
 }
 
 func (m model) handleLoad() model {
-	// For now, load hardcoded example
-	// TODO: Implement file picker
+	// Load default example if no file loaded
 	filename := "../examples/sum.asm"
-	
-	// Try to assemble and load
-	err := m.cpuWrapper.AssembleFile(filename)
-	if err == nil {
-		m.loadedFile = "examples/sum.asm"
-		// Read the source file for display
-		m.sourceCode = []string{
-			"; Sum example",
-			"START:  LOCO 10",
-			"        STOD 100",
-			"        LOCO 20",
-			"        STOD 101",
-			"        LODD 100",
-			"        ADDD 101",
-			"        STOD 102",
-			"        HALT",
-		}
-		m.currentLine = 0
-		m.syncCPUState()
-	}
-	
+	m.loadFile(filename)
 	return m
 }
 

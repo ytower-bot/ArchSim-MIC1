@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
@@ -21,6 +23,7 @@ type model struct {
 	loadedFile    string
 	running       bool
 	showHelp      bool
+	errorMsg      string
 
 	// Layout
 	width  int
@@ -49,10 +52,10 @@ type CacheStats struct {
 	InstMisses int
 }
 
-func initialModel() model {
+func initialModel(filename string) model {
 	wrapper := NewCPUWrapper()
 	
-	return model{
+	m := model{
 		cpuWrapper: wrapper,
 		cpu: CPUState{
 			PC:     0x0000,
@@ -70,6 +73,13 @@ func initialModel() model {
 		running:     false,
 		showHelp:    false,
 	}
+	
+	// Load file if provided
+	if filename != "" {
+		m.loadFile(filename)
+	}
+	
+	return m
 }
 
 func (m model) Init() tea.Cmd {
@@ -102,7 +112,45 @@ func (m model) getStatusLine() string {
 	if m.loadedFile != "" {
 		fileName = m.loadedFile
 	}
-	return fmt.Sprintf(" %s | %s | Cycle: %d", fileName, status, m.cpu.Cycles)
+	
+	line := fmt.Sprintf(" %s | %s | Cycle: %d", fileName, status, m.cpu.Cycles)
+	if m.errorMsg != "" {
+		line += fmt.Sprintf(" | ERROR: %s", m.errorMsg)
+	}
+	return line
+}
+
+func (m *model) loadFile(filename string) {
+	// Read source file
+	file, err := os.Open(filename)
+	if err != nil {
+		m.errorMsg = fmt.Sprintf("Cannot open file: %v", err)
+		return
+	}
+	defer file.Close()
+	
+	scanner := bufio.NewScanner(file)
+	m.sourceCode = []string{}
+	for scanner.Scan() {
+		m.sourceCode = append(m.sourceCode, scanner.Text())
+	}
+	
+	if err := scanner.Err(); err != nil {
+		m.errorMsg = fmt.Sprintf("Cannot read file: %v", err)
+		return
+	}
+	
+	// Assemble and load into CPU
+	err = m.cpuWrapper.AssembleFile(filename)
+	if err != nil {
+		m.errorMsg = fmt.Sprintf("Assembly failed: %v", err)
+		return
+	}
+	
+	m.loadedFile = filename
+	m.currentLine = 0
+	m.errorMsg = ""
+	m.syncCPUState()
 }
 
 func (m model) getLeftPanelWidth() int {
@@ -130,9 +178,9 @@ func (m model) renderSourceCode() string {
 	for i := start; i < end; i++ {
 		prefix := "  "
 		if i == m.currentLine {
-			prefix = "> "
+			prefix = "->"
 		}
-		b.WriteString(fmt.Sprintf("%s%3d | %s\n", prefix, i+1, m.sourceCode[i]))
+		b.WriteString(fmt.Sprintf("%s %3d | %s\n", prefix, i+1, m.sourceCode[i]))
 	}
 
 	return b.String()
@@ -142,7 +190,11 @@ func (m model) renderState() string {
 	var b strings.Builder
 
 	b.WriteString("CPU STATE\n\n")
-	b.WriteString(fmt.Sprintf("Status: %s\n", map[bool]string{true: "Running", false: "Stopped"}[m.running]))
+	status := "STOPPED"
+	if m.running {
+		status = "RUNNING"
+	}
+	b.WriteString(fmt.Sprintf("Status: %s\n", status))
 	b.WriteString(fmt.Sprintf("Cycles: %d\n", m.cpu.Cycles))
 	b.WriteString(fmt.Sprintf("Clock:  %d\n\n", m.cpu.Clock))
 
@@ -158,18 +210,34 @@ func (m model) renderState() string {
 	b.WriteString(fmt.Sprintf("N: %t  Z: %t\n\n", m.cpu.N, m.cpu.Z))
 
 	b.WriteString("MEMORY\n\n")
-	if len(m.cpu.Memory) == 0 {
-		b.WriteString("Empty\n\n")
-	} else {
-		count := 0
-		for addr := uint16(0x100); addr < 0x110 && count < 5; addr++ {
-			if val, ok := m.cpu.Memory[addr]; ok {
-				b.WriteString(fmt.Sprintf("0x%03X: 0x%04X (%d)\n", addr, val, val))
-				count++
-			}
+	// Show memory around PC and data area (0x100-0x10F)
+	hasData := false
+	
+	// Show PC location
+	pcAddr := m.cpu.PC
+	if pcAddr < 4096 {
+		val := m.cpuWrapper.ReadMemory(pcAddr)
+		if val != 0 {
+			b.WriteString(fmt.Sprintf("@PC  0x%03X: 0x%04X\n", pcAddr, val))
+			hasData = true
 		}
-		b.WriteString("\n")
 	}
+	
+	// Show data area (typical variables location)
+	count := 0
+	for addr := uint16(0x100); addr <= 0x10F && count < 8; addr++ {
+		val := m.cpuWrapper.ReadMemory(addr)
+		if val != 0 {
+			b.WriteString(fmt.Sprintf("     0x%03X: 0x%04X (%d)\n", addr, val, val))
+			count++
+			hasData = true
+		}
+	}
+	
+	if !hasData {
+		b.WriteString("Empty\n")
+	}
+	b.WriteString("\n")
 
 	b.WriteString("CACHE STATS\n\n")
 	dataTotal := m.cpu.CacheStats.DataHits + m.cpu.CacheStats.DataMisses

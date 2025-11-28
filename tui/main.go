@@ -8,8 +8,20 @@ import (
 )
 
 func main() {
+	var filename string
+	
+	// Parse command line arguments
+	if len(os.Args) > 1 {
+		filename = os.Args[1]
+		// Check if file exists
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			fmt.Printf("Error: file not found: %s\n", filename)
+			os.Exit(1)
+		}
+	}
+	
 	p := tea.NewProgram(
-		initialModel(),
+		initialModel(filename),
 		tea.WithAltScreen(),
 	)
 
