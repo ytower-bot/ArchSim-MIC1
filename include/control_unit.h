@@ -58,7 +58,7 @@ int should_branch(mmux* m);
 void init_mmux(mmux* m);
 void init_amux(amux* a);
 void init_control_memory(control_memory* cm);
-void load_microprogram(control_memory* cm, const char* filename);
+int load_microprogram(control_memory* cm, const char* filename);
 int bits_to_int(int bits[], int size);
 void int_to_bits(int value, int bits[], int size);
 

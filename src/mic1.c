@@ -141,9 +141,8 @@ int is_cpu_halted(mic1_cpu* cpu) {
 
 // Control unit functions
 // Note: init_mir(), run_mir(), decode_microinstruction(), init_mpc(), run_mpc(), 
-//       increment_mpc(), init_mmux(), run_mmux(), should_branch(), init_amux(), run_amux() - implemented in control_unit.c
-void init_control_memory(control_memory* cm) { if (!cm) return; }
-void load_microprogram(control_memory* cm, const char* filename) { if (!cm || !filename) return; }
+//       increment_mpc(), init_mmux(), run_mmux(), should_branch(), init_amux(), run_amux(),
+//       init_control_memory(), load_microprogram() - implemented in control_unit.c
 // bits_to_int, int_to_bits - implemented in src/utils/conversions.c
 
 // Cache functions - implemented in src/cache.c

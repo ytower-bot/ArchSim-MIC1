@@ -1,0 +1,76 @@
+# Basic MIC-1 Microprogram for Testing
+# Format: 32 bits per microinstruction (big-endian, bit[0]=MSB)
+# Bits: [AMUX|COND|ALU|SH|MBR|MAR|RD|WR|ENC|C|B|A|ADDR]
+#       [1   |2   |2  |2 |1  |1  |1 |1 |1  |4|4|4|8   ]
+
+# Microinstruction 0: NOP (all zeros)
+# No operation - all control signals inactive
+00000000000000000000000000000000
+
+# Microinstruction 1: MAR <- PC
+# Load PC into MAR (prepare for memory read)
+# MAR=1, B=0100 (PC), ALU=00 (pass B)
+00000000100000000100000000000000
+
+# Microinstruction 2: MBR <- Memory[MAR]
+# Read memory into MBR
+# RD=1 (read enable)
+00000000000000001000000000000000
+
+# Microinstruction 3: AC <- AC + 1
+# Increment accumulator
+# C=0101 (AC), B=0101 (AC), ALU=01 (A+B), A=0001 (constant 1), ENC=1
+00001000000101010101000100000000
+
+# Microinstruction 4: PC <- PC + 1
+# Increment program counter
+# C=0100 (PC), B=0100 (PC), ALU=01 (A+B), A=0001 (constant 1), ENC=1
+00001000000101000100000100000000
+
+# Microinstruction 5: SP <- SP - 1
+# Decrement stack pointer
+# C=0110 (SP), B=0110 (SP), ALU=10 (A-B), A=0001 (constant 1), ENC=1
+00010000000101100110000100000000
+
+# Microinstruction 6: Branch if N (negative flag)
+# COND=01 (if N), ADDR=00001010 (jump to address 10)
+00010000000000000000000000001010
+
+# Microinstruction 7: Branch if Z (zero flag)
+# COND=10 (if Z), ADDR=00001111 (jump to address 15)
+00100000000000000000000000001111
+
+# Microinstruction 8: Unconditional branch
+# COND=11 (always), ADDR=00000000 (jump to address 0)
+00110000000000000000000000000000
+
+# Microinstruction 9: MAR <- MBR
+# Copy MBR to MAR, MAR signal active
+# MAR=1 (write to MAR), B=0010 (MBR), ALU=00 (pass B)
+00000000100000000010000000000000
+
+# Microinstruction 10: AC <- MBR
+# Load MBR into accumulator
+# C=0101 (AC), B=0010 (MBR), ALU=00 (pass B), ENC=1
+00000000000101010010000000000000
+
+# Microinstruction 11: Memory[MAR] <- MBR
+# Write MBR to memory
+# WR=1 (write enable)
+00000000000000000100000000000000
+
+# Microinstruction 12: AC <- AC AND MBR (using AMUX)
+# AMUX=1 (select MBR), C=0101 (AC), B=0101 (AC), ALU=11 (AND), ENC=1
+10011000000101010101000000000000
+
+# Microinstruction 13: AC <- AC + MBR (using AMUX)
+# AMUX=1 (select MBR), C=0101 (AC), B=0101 (AC), ALU=01 (ADD), ENC=1
+10001000000101010101000000000000
+
+# Microinstruction 14: Left shift AC
+# C=0101 (AC), B=0101 (AC), ALU=00 (pass), SH=01 (left shift), ENC=1
+00000010000101010101000000000000
+
+# Microinstruction 15: Right shift AC
+# C=0101 (AC), B=0101 (AC), ALU=00 (pass), SH=10 (right shift), ENC=1
+00000100000101010101000000000000

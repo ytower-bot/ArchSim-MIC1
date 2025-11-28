@@ -488,3 +488,97 @@ void run_amux(amux* a, mbr* mb, latch* lA, alu* u) {
         copy_data(u->input_a, mb->data);
     }
 }
+
+/**
+ * @brief Initialize control memory structure
+ *
+ * @param cm Pointer to control_memory structure
+ *
+ * Initializes all microinstructions in the control memory to zero.
+ * The control memory stores 79 microinstructions, each 32 bits wide.
+ */
+void init_control_memory(control_memory* cm) {
+    if (!cm) {
+        return;
+    }
+
+    for (int i = 0; i < MICROPROGRAM_SIZE; i++) {
+        for (int j = 0; j < 32; j++) {
+            cm->microinstructions[i][j] = 0;
+        }
+    }
+}
+
+/**
+ * @brief Load microprograma from file into control memory
+ *
+ * @param cm Pointer to control_memory structure
+ * @param filename Path to microprograma file
+ *
+ * Loads microinstructions from a binary file into control memory.
+ * File format: Each line contains 32 binary digits (0 or 1) representing one microinstruction.
+ * Lines starting with '#' or ';' are comments and ignored.
+ * Empty lines are ignored.
+ *
+ * Format example:
+ * # NOP instruction
+ * 00000000000000000000000000000000
+ * # MAR <- PC
+ * 00000000000100000000000000000001
+ *
+ * Returns: Number of microinstructions loaded, or -1 on error.
+ */
+int load_microprogram(control_memory* cm, const char* filename) {
+    if (!cm || !filename) {
+        return -1;
+    }
+
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        fprintf(stderr, "Error: Could not open microprogram file: %s\n", filename);
+        return -1;
+    }
+
+    char line[128];
+    int instruction_count = 0;
+
+    while (fgets(line, sizeof(line), file) && instruction_count < MICROPROGRAM_SIZE) {
+        // Skip comments and empty lines
+        if (line[0] == '#' || line[0] == ';' || line[0] == '\n' || line[0] == '\r') {
+            continue;
+        }
+
+        // Parse 32-bit microinstruction
+        int valid_bits = 0;
+        for (int i = 0; i < 32 && line[i] != '\0' && line[i] != '\n'; i++) {
+            if (line[i] == '0') {
+                cm->microinstructions[instruction_count][i] = 0;
+                valid_bits++;
+            } else if (line[i] == '1') {
+                cm->microinstructions[instruction_count][i] = 1;
+                valid_bits++;
+            } else if (line[i] != ' ' && line[i] != '\t') {
+                // Invalid character
+                fprintf(stderr, "Warning: Invalid character '%c' at instruction %d, bit %d\n", 
+                        line[i], instruction_count, i);
+            }
+        }
+
+        // Validate we got exactly 32 bits
+        if (valid_bits == 32) {
+            instruction_count++;
+        } else if (valid_bits > 0) {
+            fprintf(stderr, "Warning: Incomplete microinstruction at line %d (got %d bits, expected 32)\n",
+                    instruction_count + 1, valid_bits);
+        }
+    }
+
+    fclose(file);
+
+    if (instruction_count == 0) {
+        fprintf(stderr, "Error: No valid microinstructions loaded from %s\n", filename);
+        return -1;
+    }
+
+    return instruction_count;
+}
