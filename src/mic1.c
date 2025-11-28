@@ -15,7 +15,8 @@ void init_mic1(mic1_cpu* cpu) {
     // Inicializar banco de registradores
     init_register_bank(&cpu->reg_bank);
     init_alu(&cpu->alu);
-    init_cache(&cpu->cache);
+    init_cache(&cpu->data_cache);
+    init_cache(&cpu->instruction_cache);
     init_memory(&cpu->main_memory);
     init_mar(&cpu->mar);
     init_mbr(&cpu->mbr);

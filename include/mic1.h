@@ -26,7 +26,8 @@ typedef struct mic1_cpu {
     mar mar;
     mbr mbr;
     memory main_memory;
-    cache cache;
+    cache data_cache;
+    cache instruction_cache;
     mir mir;
     mpc mpc;
     mmux mmux;
