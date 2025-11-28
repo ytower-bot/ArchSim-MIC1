@@ -214,7 +214,7 @@ Tempo Restante (FASE 6B-6E): ~6-10 horas
 
 COMMITS
 -------
-(To be added after git commit)
+d5d4f92 - feat: implement FASE_6A - ISA foundation and microprograma structure
 
 CONCLUSÃO
 ---------
