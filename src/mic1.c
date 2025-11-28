@@ -137,9 +137,7 @@ void init_memory(memory* mem) { if (!mem) return; }
 void m_read(mar* a, mbr* b, memory* mem) { if (!a || !b || !mem) return; }
 void m_write(mar* a, mbr* b, memory* mem) { if (!a || !b || !mem) return; }
 void load_program(memory* mem, const char* filename) { if (!mem || !filename) return; }
-int address_to_int(int address[12]) { if (!address) return 0; return 0; }
-void int_to_address(int addr, int address[12]) { if (!address) return; }
-void copy_data(int dest[16], int src[16]) { if (!dest || !src) return; }
+// address_to_int, int_to_address, copy_data - implemented in src/utils/conversions.c
 
 // Shifter functions - implemented in src/shifter.c
 // init_shifter, lshift, rshift, set_shifter_input, set_shifter_control
@@ -160,8 +158,7 @@ void run_mmux(mmux* m, mpc* p, mir* mir) { if (!m || !p || !mir) return; }
 int should_branch(mmux* m) { if (!m) return 0; return 0; }
 void run_amux(amux* a, mbr* b, latch* lA, alu* u) { if (!a || !b || !lA || !u) return; }
 void load_microprogram(control_memory* cm, const char* filename) { if (!cm || !filename) return; }
-int bits_to_int(int bits[], int size) { if (!bits || size <= 0) return 0; return 0; }
-void int_to_bits(int value, int bits[], int size) { if (!bits || size <= 0) return; }
+// bits_to_int, int_to_bits - implemented in src/utils/conversions.c
 
 // Cache functions
 void init_cache(cache* c) { if (!c) return; c->hits = 0; c->misses = 0; for (int i = 0; i < CACHE_SIZE; i++) { c->lines[i].valid = 0; } }
