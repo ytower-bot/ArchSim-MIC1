@@ -127,7 +127,7 @@ int is_cpu_halted(mic1_cpu* cpu) {
 
 // Datapath functions - implemented in src/datapath.c
 // init_register_bank, init_decoder, init_decoderC, run_decoder
-void run_decoderC(decoderC* d, shifter* s) { if (!d || !s) return; }
+// run_decoderC - implemented in src/datapath.c
 
 // ALU functions - implemented in src/alu.c
 
@@ -141,8 +141,7 @@ void load_program(memory* mem, const char* filename) { if (!mem || !filename) re
 
 // Shifter functions - implemented in src/shifter.c
 // init_shifter, lshift, rshift, set_shifter_input, set_shifter_control
-void run_shifter(shifter* s, mbr* b, barrC* c) { if (!s || !b || !c) return; }
-int get_shifter_control_value(int control[2]) { if (!control) return 0; return 0; }
+// run_shifter, get_shifter_control_value - implemented in src/shifter.c
 
 // Control unit functions
 void init_mir(mir* m) { if (!m) return; }

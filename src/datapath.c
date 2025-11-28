@@ -70,3 +70,45 @@ void run_decoder(decoder* d, latch* l) {
         copy_array(selected_register->data, l->data);
     }
 }
+
+/**
+ * Executa operação do decoder C (write-back).
+ * Se ENC=1, escreve shifter → registrador selecionado.
+ */
+void run_decoderC(decoderC* d, shifter* s) {
+    if (!d || !s) return;
+    
+    // Se ENC não está ativo, não faz nada
+    if (d->control_enc == 0) return;
+    
+    int reg_index = control_to_index(d->control_c);
+    
+    mic1_register* selected_register = NULL;
+    
+    switch (reg_index) {
+        case 0:  selected_register = &d->rb->PC; break;
+        case 1:  selected_register = &d->rb->AC; break;
+        case 2:  selected_register = &d->rb->IR; break;
+        case 3:  selected_register = &d->rb->TIR; break;
+        case 4:  selected_register = &d->rb->SP; break;
+        case 5:  selected_register = &d->rb->AMASK; break;
+        case 6:  selected_register = &d->rb->SMASK; break;
+        case 7:  selected_register = &d->rb->R0; break;
+        case 8:  selected_register = &d->rb->R1; break;
+        case 9:  selected_register = &d->rb->Rm1; break;
+        case 10: selected_register = &d->rb->A; break;
+        case 11: selected_register = &d->rb->B; break;
+        case 12: selected_register = &d->rb->C; break;
+        case 13: selected_register = &d->rb->D; break;
+        case 14: selected_register = &d->rb->E; break;
+        case 15: selected_register = &d->rb->F; break;
+        default:
+            printf("Erro: Sinal de controle do decoderC inválido (%d).\n", reg_index);
+            return;
+    }
+    
+    // Escreve shifter data no registrador selecionado
+    if (selected_register != NULL) {
+        copy_array(s->data, selected_register->data);
+    }
+}

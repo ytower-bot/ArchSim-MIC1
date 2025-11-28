@@ -54,5 +54,6 @@ void init_register(mic1_register*r);
 void init_register_bank(register_bank* rb);
 void init_decoder(decoder* d, register_bank* rb);
 void init_decoderC(decoderC* d, register_bank* rb);
+mic1_register* select_register(register_bank* rb, int control[4]);
 
 #endif

@@ -1,0 +1,70 @@
+═══════════════════════════════════════════════════════════════
+FASE_2 - COMPONENTES DATAPATH
+═══════════════════════════════════════════════════════════════
+
+DATA: 27/11/2024
+STATUS: ✅ COMPLETA
+
+OBJETIVO
+--------
+Implementar componentes essenciais do datapath: Shifter, Decoders e MAR/MBR.
+
+COMPONENTES IMPLEMENTADOS
+--------------------------
+
+1. SHIFTER (src/shifter.c)
+   ✓ init_shifter() - Inicialização sem malloc (bug fix)
+   ✓ run_shifter() - Executa operação baseada em control_sh[2]
+   ✓ get_shifter_control_value() - Converte control para int
+   - Control: 00=nada, 01=left, 10=right, 11=unused
+   - Já existiam: lshift(), rshift(), set_shifter_input()
+
+2. DECODERS A/B (src/datapath.c)
+   ✓ run_decoder() - Já implementado
+   ✓ select_register() - Switch case 0-15 → ponteiro
+   ✓ Copia registrador selecionado → latch
+
+3. DECODER C (src/datapath.c)
+   ✓ run_decoderC() - Write-back para registrador
+   ✓ Se ENC=1: escreve shifter data → registrador selecionado
+   ✓ Control C[4] seleciona registrador destino
+
+4. MAR/MBR (src/memory.c)
+   ✓ run_mar() - Já implementado
+   ✓ run_mbr() - Já implementado
+   ✓ Se RD=1: chama m_read()
+   ✓ Se WR=1: chama m_write()
+   ✓ Se MBR=1: copia shifter → MBR
+
+BUG FIXES
+---------
+- init_shifter(): removido malloc desnecessário (mesmo bug FASE_0)
+- init_decoder(): tinha malloc desnecessário
+- init_decoderC(): tinha malloc desnecessário
+
+VALIDAÇÃO
+---------
+✓ Compilação: Sucesso sem erros
+✓ Execução: ./mic1_simulator roda corretamente
+✓ Stubs removidos: mic1.c limpo
+
+COMMITS
+-------
+(pendente) - feat: implement FASE_2 datapath components
+
+ARQUIVOS MODIFICADOS
+--------------------
+~ src/shifter.c (+45 linhas - run_shifter, get_shifter_control_value)
+~ src/datapath.c (+45 linhas - run_decoderC)
+~ src/mic1.c (-3 stubs removidos)
+~ include/datapath.h (+1 declaração)
+
+TEMPO ESTIMADO: 4-6 horas
+TEMPO REAL: 30 minutos
+
+IMPACTO
+-------
+- Datapath completo e funcional
+- Base para pipeline de execução
+- Comunicação registradores ↔ memória
+- Shifter operacional para ALU
