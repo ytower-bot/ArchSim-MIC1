@@ -1,71 +1,117 @@
 ═══════════════════════════════════════════════════════════════
-FASE_4 - AMUX COMPONENT (Parcial)
+FASE_4 - CONTROL UNIT & MICROPROGRAMA
 ═══════════════════════════════════════════════════════════════
 
 DATA: 28/11/2025
-STATUS: ⚠️ PARCIAL (1/4 componentes completos)
+STATUS: ✅ COMPLETA
 
 OBJETIVO
 --------
-Implementar componentes da Unidade de Controle:
+Implementar Unidade de Controle completa + Microprograma:
 - AMUX: Multiplexador para entrada A da ALU
-- MIR: Microinstruction Register (já implementado)
-- MPC: Microprogram Counter (já implementado)
-- MMUX: Micro Address Multiplexer (já implementado)
+- MIR: Microinstruction Register
+- MPC: Microprogram Counter
+- MMUX: Micro Address Multiplexer
+- Control Memory: ROM para microprograma
+- Microprograma básico (16 instruções de teste)
 
-TASKS IMPLEMENTADAS
--------------------
-- [x] init_amux() - Inicialização com control_amux=0
-- [x] run_amux() - Seleção de fonte (Latch A ou MBR)
-- [x] Remover stubs de mic1.c
-- [x] Suite de testes completa (7/7 passando)
-- [x] Documentação Doxygen
+COMPONENTES IMPLEMENTADOS
+--------------------------
+1. AMUX (Sessão 1):
+   - [x] init_amux() - Inicialização com control_amux=0
+   - [x] run_amux() - Seleção de fonte (Latch A ou MBR)
+   - [x] Suite de testes (7/7 passando)
+
+2. Control Memory (Sessão 2):
+   - [x] init_control_memory() - Inicializa ROM com zeros
+   - [x] load_microprogram() - Carrega de arquivo binário
+   - [x] Suite de testes (9/9 passando)
+
+3. Microprograma Básico:
+   - [x] 16 microinstruções de teste em data/basic_microcode.txt
+   - [x] NOP, MAR←PC, MBR←Mem, AC←AC+1, PC←PC+1, SP←SP-1
+   - [x] Branches condicionais (N, Z, incondicional)
+   - [x] Operações AMUX (AND, ADD com MBR)
+   - [x] Shifts (esquerda/direita)
 
 VALIDAÇÃO
 ---------
 ✓ Compilação sem warnings
-✓ Testes unitários: 7/7 PASS
-✓ Lógica de seleção: control=0 → Latch A, control=1 → MBR
+✓ Testes AMUX: 7/7 PASS (100%)
+✓ Testes Control Memory: 9/9 PASS (100%)
+✓ Decodificação de microinstruções correta
 ✓ Validação de ponteiros null
-✓ Integração com copy_data()
+✓ Tratamento de erros (arquivo inexistente)
+✓ Formato binário de 32 bits big-endian
 
 COMMITS
 -------
 b5e7fbd - feat: implement FASE_4 - AMUX component
+bf6dd10 - docs: add FASE_4 log for AMUX implementation
+bca02c2 - feat: implement FASE_4 - microprograma loader and control memory
 
-ARQUIVOS MODIFICADOS
---------------------
-+ src/tests/test_amux.c (130 linhas)
-~ src/control_unit.c (+36 linhas)
-~ src/mic1.c (-2 linhas de stubs)
+ARQUIVOS MODIFICADOS/CRIADOS
+-----------------------------
++ src/tests/test_amux.c (127 linhas)
++ src/tests/test_control_memory.c (171 linhas)
++ data/basic_microcode.txt (77 linhas, 16 instruções)
+~ src/control_unit.c (+118 linhas - init/load functions)
+~ include/control_unit.h (+1 alteração - retorno int)
+~ src/mic1.c (-4 linhas de stubs)
 
-TEMPO ESTIMADO: 1 hora
-TEMPO REAL: 30 minutos
+TEMPO ESTIMADO: 4-5 horas
+TEMPO REAL: ~3 horas
 
 IMPACTO
 -------
-AMUX implementado permite que a ULA receba entrada A de duas fontes:
-- Latch A (dados de registrador)
-- MBR (dados vindos da memória)
+FASE_4 completa implementa toda a infraestrutura da Unidade de Controle:
 
-Esta é uma função crítica do datapath MIC-1, permitindo que microinstruções
-especifiquem se a operação da ALU deve usar um registrador ou um valor
-da memória.
+1. AMUX: Permite ULA receber entrada A de duas fontes (Latch A ou MBR)
+2. Control Memory: ROM de 79 posições x 32 bits para microprograma
+3. Microprograma Loader: Carrega instruções de arquivo texto binário
+4. Microprograma Básico: 16 instruções de teste validadas
 
-PRÓXIMOS PASSOS (FASE_4 completa)
-----------------------------------
-- [ ] Documentar interação AMUX ↔ MIR (sinal de controle bit[0])
-- [ ] Integrar run_amux() no ciclo de execução
-- [ ] Validar com microinstruções reais (quando ROM estiver pronta)
+Com esta fase, o MIC-1 agora tem:
+- Decodificação completa de microinstruções (MIR)
+- Controle de fluxo (MPC + MMUX + branches)
+- Multiplexação flexível (AMUX para ALU)
+- Memória de controle programável (ROM)
 
-FASE_4 ROADMAP (restante)
---------------------------
-- [x] MIR: Decodificação de microinstruções (já implementado)
-- [x] MPC: Contador de microprograma (já implementado)  
-- [x] MMUX: Multiplexador de endereço (já implementado)
-- [x] AMUX: Multiplexador entrada ALU (implementado nesta sessão)
-- [ ] Microprograma básico (10-20 instruções)
-- [ ] Loader de microprograma
-- [ ] init_control_memory()
+DETALHES TÉCNICOS
+-----------------
+Formato de Microinstrução (32 bits big-endian):
+[AMUX|COND|ALU|SH|MBR|MAR|RD|WR|ENC|C|B|A|ADDR]
+[1   |2   |2  |2 |1  |1  |1 |1 |1  |4|4|4|8   ]
 
-STATUS GERAL DO PROJETO: ~50% completo
+Microinstruções de Teste:
+0: NOP (all zeros)
+1: MAR ← PC (prepare memory read)
+2: MBR ← Memory[MAR] (read from memory)
+3: AC ← AC + 1 (increment accumulator)
+4: PC ← PC + 1 (increment program counter)
+5: SP ← SP - 1 (decrement stack pointer)
+6-8: Branches (if N, if Z, unconditional)
+9-10: Register transfers (MAR←MBR, AC←MBR)
+11: Memory write
+12-13: AMUX operations (AC AND/ADD MBR)
+14-15: Shifts (left/right)
+
+PRÓXIMOS PASSOS (FASE_5)
+-------------------------
+- [ ] Integrar todos os componentes no ciclo de execução
+- [ ] Implementar run_mic1_cycle() completo
+- [ ] Conectar Control Unit ↔ Datapath ↔ Memory
+- [ ] Executar sequência de microinstruções
+- [ ] Validar estado da CPU após execução
+
+ROADMAP COMPLETO
+----------------
+- [x] FASE_1: Estruturas básicas (MBR, MAR, PC, AC, SP, etc.)
+- [x] FASE_2: ALU, Shifter, Registradores
+- [x] FASE_3: Datapath connections
+- [x] FASE_4: Control Unit + Microprograma ✅ COMPLETA
+- [ ] FASE_5: Ciclo de execução completo
+- [ ] FASE_6: Microprograma completo (79 instruções)
+- [ ] FASE_7: Interpretador de instruções macro (IJVM)
+
+STATUS GERAL DO PROJETO: ~60% completo
