@@ -62,22 +62,21 @@ dkms.conf
 *~
 .DS_Store
 
-# Binary executables
-test*
-test*.c
-*.out
+# Project executables
 mic1_simulator
+tests/test_*
+!tests/test_*.c
+
+# Build directories
+obj/
+build/
+dist/
+.build/
 
 # CMake
 CMakeFiles/
 cmake_install.cmake
-Makefile
 CMakeCache.txt
-
-# Build artifacts
-build/
-dist/
-.build/
 
 # Dependencies
 vendor/

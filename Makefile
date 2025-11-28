@@ -11,94 +11,117 @@ INCDIR = include
 OBJDIR = obj
 TESTDIR = tests
 
-# Target executable
+# Target executables
 TARGET = mic1_simulator
 
-# Source files
-# Excluir arquivos de teste/exemplo que têm seu próprio main()
+# Source files (excluding main.c for library build)
 ALL_SOURCES = $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/utils/*.c)
-EXCLUDED = $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c $(SRCDIR)/$(TESTDIR)/test_alu.c $(SRCDIR)/$(TESTDIR)/test_conversions.c
+EXCLUDED = $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c
 SOURCES = $(filter-out $(EXCLUDED), $(ALL_SOURCES))
 OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+
+# Library objects (everything except main.c)
+LIB_SOURCES = $(filter-out $(SRCDIR)/main.c, $(SOURCES))
+LIB_OBJECTS = $(LIB_SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+
+# Test files
+TEST_SOURCES = $(wildcard $(TESTDIR)/*.c)
+TEST_BINS = $(TEST_SOURCES:$(TESTDIR)/%.c=$(TESTDIR)/%)
 
 # Header files
 HEADERS = $(wildcard $(INCDIR)/*.h)
 
 # Default target
 all: $(TARGET)
+	@echo "[OK] MIC-1 Simulator compiled successfully"
 
 # Create object directory if it doesn't exist
 $(OBJDIR):
-	mkdir -p $(OBJDIR)
-	mkdir -p $(OBJDIR)/utils
+	@mkdir -p $(OBJDIR)
+	@mkdir -p $(OBJDIR)/utils
 
 # Compile object files
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS) | $(OBJDIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "[CC] $<"
+	@$(CC) $(CFLAGS) -c $< -o $@
 
-# Link executable
+# Link main executable
 $(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(TARGET)
-	@echo "✅ MIC-1 Simulator compiled successfully!"
+	@echo "[LD] $@"
+	@$(CC) $(OBJECTS) -o $(TARGET)
 
 # Debug build
 debug: CFLAGS += $(DEBUGFLAGS)
-debug: $(TARGET)
+debug: clean $(TARGET)
 
-# Test build (when test files exist)
-test: $(TARGET)
-	@echo "Running tests..."
-	@if [ -d "$(TESTDIR)" ]; then \
-		echo "Test directory found"; \
-	else \
-		echo "No tests found - create $(TESTDIR) directory for tests"; \
-	fi
+# Compile and run all tests
+test: $(TEST_BINS)
+	@echo "=========================================="
+	@echo "Running all tests..."
+	@echo "=========================================="
+	@for test in $(TEST_BINS); do \
+		echo ""; \
+		echo ">>> Running $$test..."; \
+		./$$test || exit 1; \
+		echo "[PASS] $$test"; \
+	done
+	@echo ""
+	@echo "=========================================="
+	@echo "All tests passed!"
+	@echo "=========================================="
+
+# Compile individual test binaries
+$(TESTDIR)/%: $(TESTDIR)/%.c $(LIB_OBJECTS)
+	@echo "[CC+LD] $@"
+	@$(CC) $(CFLAGS) $< $(LIB_OBJECTS) -o $@
 
 # Run the simulator
 run: $(TARGET)
 	./$(TARGET)
 
-# Clean object files
+# Clean object files and test binaries
 clean:
-	rm -rf $(OBJDIR)
-	@echo "🧹 Object files cleaned"
+	@rm -rf $(OBJDIR)
+	@rm -f $(TEST_BINS)
+	@echo "[CLEAN] Object files and test binaries removed"
 
 # Clean everything
 fclean: clean
-	rm -f $(TARGET)
-	@echo "🧹 All build files cleaned"
+	@rm -f $(TARGET)
+	@echo "[CLEAN] All build artifacts removed"
 
 # Rebuild everything
 re: fclean all
 
 # Install (copy to system path - optional)
 install: $(TARGET)
-	cp $(TARGET) /usr/local/bin/
-	@echo "📦 MIC-1 Simulator installed to /usr/local/bin/"
+	@cp $(TARGET) /usr/local/bin/
+	@echo "[INSTALL] MIC-1 Simulator installed to /usr/local/bin/"
 
 # Docker targets
 docker-build:
-	@echo "🐳 Building Docker image..."
-	docker build -t mic1-simulator .
+	@echo "[DOCKER] Building image..."
+	@docker build -t mic1-simulator .
 
 docker-test: docker-build
-	@echo "🐳 Testing Docker image..."
-	docker run --rm mic1-simulator
+	@echo "[DOCKER] Running tests..."
+	@docker run --rm mic1-simulator make test
 
 docker-shell: docker-build
-	@echo "🐳 Starting Docker shell..."
-	docker run --rm -it mic1-simulator /bin/bash
+	@echo "[DOCKER] Starting shell..."
+	@docker run --rm -it mic1-simulator /bin/bash
 
 # Show help
 help:
 	@echo "MIC-1 Simulator Build System"
+	@echo ""
 	@echo "Available targets:"
 	@echo "  all          - Build the simulator (default)"
 	@echo "  debug        - Build with debug symbols"
-	@echo "  test         - Build and run tests"
+	@echo "  test         - Build and run all tests"
 	@echo "  run          - Build and run simulator"
-	@echo "  clean        - Remove object files"
-	@echo "  fclean       - Remove all build files"
+	@echo "  clean        - Remove object files and test binaries"
+	@echo "  fclean       - Remove all build artifacts"
 	@echo "  re           - Rebuild everything"
 	@echo "  install      - Install to system path"
 	@echo "  docker-build - Build Docker image"
