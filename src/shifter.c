@@ -1,4 +1,5 @@
-#include "shifter.h"
+#include "../include/shifter.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -33,5 +34,4 @@ void init_shifter(shifter*s){
     set_shifter_input(s, input);
     int control[2] = {0};
     set_shifter_control(s, control);
-
 }

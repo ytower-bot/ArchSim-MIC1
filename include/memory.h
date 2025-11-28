@@ -24,7 +24,7 @@ typedef struct memory {
 
 void run_mar(mar* a, struct latch* lB);
 void init_mar(mar* a);
-void run_mbr(mar* a, mbr* b, memory* mem);
+void run_mbr(mar* a, mbr* b, memory* mem, shifter* s);
 void m_read(mar* a, mbr* b, memory* mem);
 void m_write(mar* a, mbr* b, memory* mem);
 void init_mbr(mbr* b);
