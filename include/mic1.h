@@ -41,6 +41,7 @@ typedef struct mic1_cpu {
 void init_mic1(mic1_cpu* cpu);
 void reset_mic1(mic1_cpu* cpu);
 void run_mic1_cycle(mic1_cpu* cpu);
+void execute_datapath(mic1_cpu* cpu);
 void run_mic1_program(mic1_cpu* cpu);
 void step_mic1(mic1_cpu* cpu);
 int load_microprogram_file(mic1_cpu* cpu, const char* filename);

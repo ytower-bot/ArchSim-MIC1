@@ -16,13 +16,13 @@ void init_register_bank(register_bank *rb){
 }
 
 void init_decoder(decoder*d, register_bank*rb){
-    d = (decoder*) malloc(sizeof(decoder));
+    if (!d || !rb) return;
     d->rb = rb;
     for(int i = 0; i < 4; i++) d->control[i] = 0;
 }
 
 void init_decoderC(decoderC*d, register_bank*rb){
-    d = (decoderC*) malloc(sizeof(decoderC));
+    if (!d || !rb) return;
     d->rb = rb;
     for(int i = 0; i < 4; i++) d->control_c[i] = 0;
     d->control_enc = 0;

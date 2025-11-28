@@ -582,3 +582,52 @@ int load_microprogram(control_memory* cm, const char* filename) {
 
     return instruction_count;
 }
+
+/**
+ * @brief Fetch microinstruction from control memory into MIR
+ *
+ * @param cm Pointer to control_memory structure
+ * @param mpc Pointer to microprogram counter
+ * @param m Pointer to MIR structure
+ *
+ * Reads the microinstruction at the address specified by MPC from control memory
+ * and loads it into the MIR. Then decodes the microinstruction fields.
+ */
+void fetch_microinstruction(control_memory* cm, mpc* p, mir* m) {
+    if (!cm || !p || !m) {
+        return;
+    }
+
+    int address = bits_to_int(p->address, 8);
+    
+    if (address < 0 || address >= MICROPROGRAM_SIZE) {
+        fprintf(stderr, "Error: MPC address out of bounds: %d\n", address);
+        return;
+    }
+
+    for (int i = 0; i < 32; i++) {
+        m->data[i] = cm->microinstructions[address][i];
+    }
+
+    decode_microinstruction(m);
+}
+
+/**
+ * @brief Update MPC based on MMUX branch decision
+ *
+ * @param p Pointer to microprogram counter
+ * @param mmux Pointer to MMUX structure
+ * @param m Pointer to MIR structure
+ *
+ * If MMUX indicates a branch should be taken, loads MIR.ADDR into MPC.
+ * Otherwise, increments MPC by 1.
+ */
+void update_control(mpc* p, mmux* mmux, mir* m) {
+    if (!p || !mmux || !m) {
+        return;
+    }
+
+    // run_mmux already handles both branching and incrementing
+    run_mmux(mmux, p, m);
+}
+

@@ -4,6 +4,7 @@
  */
 
 #include "../include/mic1.h"
+#include "../include/utils/conversions.h"
 
 void init_mic1(mic1_cpu* cpu) {
     if (!cpu) return;
@@ -24,6 +25,18 @@ void init_mic1(mic1_cpu* cpu) {
     init_mmux(&cpu->mmux);
     init_amux(&cpu->amux);
     init_control_memory(&cpu->ctrl_mem);
+    
+    // Initialize decoders with register bank
+    cpu->decoder_a.rb = &cpu->reg_bank;
+    cpu->decoder_b.rb = &cpu->reg_bank;
+    cpu->decoder_c.rb = &cpu->reg_bank;
+    
+    for(int i = 0; i < 4; i++) {
+        cpu->decoder_a.control[i] = 0;
+        cpu->decoder_b.control[i] = 0;
+        cpu->decoder_c.control_c[i] = 0;
+    }
+    cpu->decoder_c.control_enc = 0;
 }
 
 void reset_mic1(mic1_cpu* cpu) {
@@ -31,9 +44,75 @@ void reset_mic1(mic1_cpu* cpu) {
     init_mic1(cpu);
 }
 
+/**
+ * @brief Execute datapath operations for current microinstruction
+ *
+ * @param cpu Pointer to MIC-1 CPU structure
+ *
+ * Executes the complete datapath sequence:
+ * 1. Decoder A/B read registers to Latch A/B
+ * 2. AMUX selects ALU input A (Latch A or MBR)
+ * 3. ALU executes operation
+ * 4. Shifter processes ALU result
+ * 5. Decoder C writes result to register (if ENC=1)
+ * 6. MAR/MBR handle memory operations (if RD=1 or WR=1)
+ */
+void execute_datapath(mic1_cpu* cpu) {
+    if (!cpu) return;
+
+    mir* m = &cpu->mir;
+
+    for (int i = 0; i < 4; i++) {
+        cpu->decoder_a.control[i] = m->a[i];
+        cpu->decoder_b.control[i] = m->b[i];
+        cpu->decoder_c.control_c[i] = m->c[i];
+    }
+    cpu->decoder_c.control_enc = m->enc;
+
+    run_decoder(&cpu->decoder_a, &cpu->latch_a);
+    run_decoder(&cpu->decoder_b, &cpu->latch_b);
+
+    cpu->amux.control_amux = m->amux;
+    run_amux(&cpu->amux, &cpu->mbr, &cpu->latch_a, &cpu->alu);
+
+    copy_array(cpu->latch_b.data, cpu->alu.input_b);
+
+    for (int i = 0; i < 2; i++) {
+        cpu->alu.control[i] = m->alu[i];
+    }
+    run_alu(&cpu->alu);
+
+    cpu->mmux.alu_n = cpu->alu.flag_n;
+    cpu->mmux.alu_z = cpu->alu.flag_z;
+
+    for (int i = 0; i < 2; i++) {
+        cpu->shifter.control_sh[i] = m->sh[i];
+    }
+    copy_array(cpu->alu.output, cpu->shifter.data);
+    run_shifter(&cpu->shifter, &cpu->mbr, &cpu->bus_c);
+
+    run_decoderC(&cpu->decoder_c, &cpu->shifter);
+
+    if (m->mar) {
+        run_mar(&cpu->mar, &cpu->latch_b);
+    }
+
+    if (m->rd || m->wr) {
+        run_mbr(&cpu->mar, &cpu->mbr, &cpu->main_memory, &cpu->shifter);
+    }
+}
+
 void run_mic1_cycle(mic1_cpu* cpu) {
     if (!cpu) return;
+
+    fetch_microinstruction(&cpu->ctrl_mem, &cpu->mpc, &cpu->mir);
+
+    execute_datapath(cpu);
+
+    update_control(&cpu->mpc, &cpu->mmux, &cpu->mir);
+
     cpu->cycle_count++;
+    cpu->clock++;
 }
 
 void run_mic1_program(mic1_cpu* cpu) {

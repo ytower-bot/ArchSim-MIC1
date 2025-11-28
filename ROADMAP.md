@@ -1,7 +1,7 @@
 # ROADMAP - ArchSim-MIC1
 
 **Modelo:** Implementação por Fases
-**Status:** Fases 0-3 Completas | Fases 4-8 Pendentes
+**Status:** Fases 0-5 Completas | Fases 6-8 Pendentes
 
 ---
 
@@ -127,13 +127,13 @@ typedef struct cache {
 
 ---
 
-## FASE 4 - UNIDADE DE CONTROLE
+## FASE 4 - UNIDADE DE CONTROLE ✅
 
 **Objetivo:** MIR, MPC, MMUX executando microinstruções
 
 ### MIR (Microinstruction Register)
-- [ ] `run_mir()` - Decodifica 32 bits em sinais de controle
-- [ ] Distribuir sinais para componentes:
+- [x] `run_mir()` - Decodifica 32 bits em sinais de controle
+- [x] Distribuir sinais para componentes:
   - [0]: AMUX
   - [1-2]: COND → MMUX
   - [3-4]: ALU → ALU
@@ -147,50 +147,54 @@ typedef struct cache {
   - [16-19]: B → Decoder B
   - [20-23]: A → Decoder A
   - [24-31]: ADDR → MMUX
-- [ ] `load_mir()` - Carrega microinstrução da memória de controle
+- [x] `load_mir()` - Carrega microinstrução da memória de controle
 
 ### MPC (Microprogram Counter)
-- [ ] `increment_mpc()` - MPC = MPC + 1
-- [ ] `load_mpc(address)` - Carrega novo endereço (desvio)
-- [ ] `run_mpc()` - Busca próxima microinstrução
+- [x] `increment_mpc()` - MPC = MPC + 1
+- [x] `load_mpc(address)` - Carrega novo endereço (desvio)
+- [x] `run_mpc()` - Busca próxima microinstrução
 
 ### MMUX (Micro Address Multiplexer)
-- [ ] `run_mmux()` - Decide próximo endereço MPC
-- [ ] Lógica de desvio:
+- [x] `run_mmux()` - Decide próximo endereço MPC
+- [x] Lógica de desvio:
   - COND=00: MPC+1 (sequencial)
   - COND=01: Se N=1, ADDR; senão MPC+1
   - COND=10: Se Z=1, ADDR; senão MPC+1
   - COND=11: ADDR (incondicional)
-- [ ] Ler flags N/Z da ALU
+- [x] Ler flags N/Z da ALU
 
 ### Microprograma Básico
-- [ ] Definir 10-20 microinstruções de teste
-- [ ] Implementar loader de microprograma
-- [ ] `init_control_memory()` - Carrega ROM
+- [x] Definir 10-20 microinstruções de teste
+- [x] Implementar loader de microprograma
+- [x] `init_control_memory()` - Carrega ROM
 
 **Arquivos:**
-- `src/control_unit.c` (novo - ~200 linhas)
+- `src/control_unit.c` (novo - ~640 linhas)
 - `src/mic1.c` (integração)
 - `include/control_unit.h` (atualizar)
 
 **Validação:**
-- Executar microinstrução simples (ex: MAR ← PC)
-- Testar desvio condicional
-- Testar flags N/Z
+- ✓ Executar microinstrução simples (ex: MAR ← PC)
+- ✓ Testar desvio condicional
+- ✓ Testar flags N/Z
+- ✓ AMUX: 7/7 testes passando
+- ✓ Control Memory: 9/9 testes passando
 
 **Tempo Estimado:** 4-5 horas
+**Tempo Real:** ~4 horas
 **Prioridade:** ALTA
+**Commits:** b5e7fbd, bf6dd10
 
 ---
 
-## FASE 5 - CICLO DE EXECUÇÃO
+## FASE 5 - CICLO DE EXECUÇÃO ✅
 
 **Objetivo:** Pipeline completo fetch-decode-execute-update
 
 ### Ciclo MIC-1
-- [ ] `fetch_microinstruction()` - MPC → ROM → MIR
-- [ ] `decode_signals()` - MIR → todos os componentes
-- [ ] `execute_datapath()` - Executar via de dados
+- [x] `fetch_microinstruction()` - MPC → ROM → MIR
+- [x] `decode_signals()` - MIR → todos os componentes (inline em execute_datapath)
+- [x] `execute_datapath()` - Executar via de dados
   1. Decoder A → Latch A
   2. Decoder B → Latch B
   3. AMUX seleciona entrada ULA
@@ -198,36 +202,48 @@ typedef struct cache {
   5. Shifter processa resultado
   6. Decoder C escreve em registrador
   7. MAR/MBR acessam memória
-- [ ] `update_control()` - MMUX decide próximo MPC
+- [x] `update_control()` - MMUX decide próximo MPC
 
 ### Integração
-- [ ] Conectar `run_mic1_cycle()` ao ciclo completo
-- [ ] Sincronização de componentes
-- [ ] Ordem de execução:
+- [x] Conectar `run_mic1_cycle()` ao ciclo completo
+- [x] Sincronização de componentes
+- [x] Ordem de execução:
   1. Fetch (MPC → MIR)
   2. Decode (MIR → sinais)
   3. Execute (Datapath)
   4. Update (MMUX → MPC)
-- [ ] `halt_mic1()` - Condição de parada
+- [ ] `halt_mic1()` - Condição de parada (não necessário ainda)
 
 ### Testes
-- [ ] Executar NOP (no operation)
-- [ ] Executar MAR ← PC
-- [ ] Executar AC ← AC + 1
-- [ ] Testar 10 ciclos consecutivos
+- [x] Executar NOP (no operation)
+- [x] Executar MAR ← PC
+- [x] Executar AC ← AC + 1
+- [x] Testar 10 ciclos consecutivos
 
 **Arquivos:**
-- `src/mic1.c` (atualizar `run_mic1_cycle()`)
-- `src/control_unit.c` (integração)
-- `src/datapath.c` (integração)
+- `src/mic1.c` (+100 linhas - execute_datapath, run_mic1_cycle reescrito)
+- `src/control_unit.c` (+55 linhas - fetch_microinstruction, update_control)
+- `src/datapath.c` (bug fixes - init_decoder/init_decoderC)
+- `include/mic1.h` (+1 declaração)
+- `include/control_unit.h` (+2 declarações)
+- `src/tests/test_execution_cycle.c` (novo - 160 linhas, 9 testes)
 
 **Validação:**
-- Executar microinstruções em sequência
-- Step-by-step funcional
-- Estado da CPU consistente
+- ✓ Executar microinstruções em sequência
+- ✓ Step-by-step funcional
+- ✓ Estado da CPU consistente
+- ✓ 9/9 testes passando (100%)
+- ✓ Compilação sem warnings
+
+**Bugs Corrigidos:**
+- Decoder initialization in init_mic1()
+- malloc bug in init_decoder/init_decoderC
+- Duplicate MPC increment in update_control()
 
 **Tempo Estimado:** 4-6 horas
+**Tempo Real:** ~5 horas
 **Prioridade:** ALTA
+**Commits:** (pending)
 
 ---
 
@@ -541,8 +557,8 @@ ONE:    .WORD 1
 | 1 | ✅ | Conversões bit/int | 1.5h | Alta |
 | 2 | ✅ | Componentes datapath | 30min | Alta |
 | 3 | ✅ | Memória + Cache | 45min | Alta |
-| 4 | 🔄 | Unidade de controle | 4-5h | Alta |
-| 5 | ⏳ | Ciclo de execução | 4-6h | Alta |
+| 4 | ✅ | Unidade de controle | 4h | Alta |
+| 5 | ✅ | Ciclo de execução | 5h | Alta |
 | 6 | ⏳ | Microprograma completo | 8-12h | Média |
 | 7 | ⏳ | Loader + Montador | 6-8h | Média |
 | 8 | ⏳ | Programas exemplo | 4-5h | Baixa |
@@ -563,10 +579,11 @@ ONE:    .WORD 1
 - Via de dados funcional
 - Memória + Cache operacional
 
-### Milestone 2: Controle e Execução 🔄
-- Fase 4: Unidade de controle
-- Fase 5: Ciclo completo
-- **Meta:** Executar primeira microinstrução
+### Milestone 2: Controle e Execução ✅
+- Fase 4: Unidade de controle ✅
+- Fase 5: Ciclo completo ✅
+- **Meta:** Executar primeira microinstrução ✅
+- **Status:** 9/9 testes passando (100%)
 
 ### Milestone 3: Sistema Completo
 - Fase 6: Microprograma
@@ -584,12 +601,14 @@ ONE:    .WORD 1
 ## ORDEM DE IMPLEMENTAÇÃO
 
 **Próximas tarefas (em ordem):**
-1. Implementar `run_mir()` (FASE 4)
-2. Implementar `run_mpc()` (FASE 4)
-3. Implementar `run_mmux()` (FASE 4)
-4. Definir microprograma básico (FASE 4)
-5. Implementar ciclo completo (FASE 5)
-6. Testar execução de microinstruções (FASE 5)
+1. ~~Implementar `run_mir()` (FASE 4)~~ ✅
+2. ~~Implementar `run_mpc()` (FASE 4)~~ ✅
+3. ~~Implementar `run_mmux()` (FASE 4)~~ ✅
+4. ~~Definir microprograma básico (FASE 4)~~ ✅
+5. ~~Implementar ciclo completo (FASE 5)~~ ✅
+6. ~~Testar execução de microinstruções (FASE 5)~~ ✅
+7. Implementar microprograma completo 79 instruções (FASE 6)
+8. Criar interpretador IR → microrotinas (FASE 6)
 
 **Dependências críticas:**
 - Fase 5 depende de Fase 4
@@ -605,11 +624,11 @@ ONE:    .WORD 1
 
 ## ESTIMATIVA TOTAL
 
-**Tempo já investido:** ~3 horas (Fases 0-3)
-**Tempo restante:** ~40-50 horas (Fases 4-10)
+**Tempo já investido:** ~12 horas (Fases 0-5)
+**Tempo restante:** ~30-40 horas (Fases 6-10)
 **Tempo total:** ~45-55 horas
 
-**Progresso:** ~45% completo
+**Progresso:** ~60% completo (Milestones 1 & 2 completos)
 
 ---
 

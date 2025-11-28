@@ -59,6 +59,8 @@ void init_mmux(mmux* m);
 void init_amux(amux* a);
 void init_control_memory(control_memory* cm);
 int load_microprogram(control_memory* cm, const char* filename);
+void fetch_microinstruction(control_memory* cm, mpc* p, mir* m);
+void update_control(mpc* p, mmux* mmux, mir* m);
 int bits_to_int(int bits[], int size);
 void int_to_bits(int value, int bits[], int size);
 
