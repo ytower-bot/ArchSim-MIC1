@@ -247,64 +247,60 @@ typedef struct cache {
 
 ---
 
-## FASE 6 - MICROPROGRAMA COMPLETO
+## FASE 6 - MICROPROGRAMA & ISA ⚠️
 
-**Objetivo:** 79 microinstruções MIC-1 + interpretação IR
+**Status:** FASE 6A Completa (Foundation) | FASE 6B-6E Pendentes
 
-### Conjunto de Instruções Macro
-- [ ] Definir opcodes (8 bits):
-  - LODD - Load direct
-  - STOD - Store direct
-  - ADDD - Add direct
-  - SUBD - Subtract direct
-  - JPOS - Jump if positive
-  - JZER - Jump if zero
-  - JUMP - Unconditional jump
-  - LOCO - Load constant
-  - LODL - Load local
-  - STOL - Store local
-  - ADDL - Add local
-  - SUBL - Subtract local
-  - JNEG - Jump if negative
-  - JNZE - Jump if not zero
-  - CALL - Call procedure
-  - PSHI - Push immediate
-  - POPA - Pop to AC
-  - PUSH - Push AC
-  - POP - Pop stack
-  - RETN - Return
-  - SWAP - Swap top two
-  - INSP - Increment SP
-  - DESP - Decrement SP
-  - HALT - Halt execution
+**Objetivo:** ISA completo MIC-1 + microprograma interpretado
 
-### Microprograma
-- [ ] Implementar 79 microinstruções
-- [ ] Microrotinas para cada opcode
-- [ ] Fetch comum: PC → MAR, MBR → IR
-- [ ] Decodificação: IR[8 bits] → endereço microrotina
-- [ ] Documentar cada microinstrução
+### FASE 6A - Foundation (COMPLETA) ✅
+- [x] Definir 24 opcodes (8 bits) em `include/opcodes.h`:
+  - LODD, STOD, ADDD, SUBD (direct addressing)
+  - LODL, STOL, ADDL, SUBL (local addressing)
+  - LOCO (load constant)
+  - JPOS, JZER, JNEG, JNZE (conditional jumps)
+  - JUMP, CALL, RETN (unconditional control flow)
+  - PSHI, PUSH, POP, POPA (stack operations)
+  - SWAP, INSP, DESP (stack manipulation)
+  - HALT (system)
+- [x] Estruturar microprograma com fetch-decode-execute
+- [x] Fetch comum: PC → MAR, MBR → IR (0x00-0x03)
+- [x] Decodificação: IR[8 bits] → endereço microrotina (0x04)
+- [x] Templates para 7 instruções chave
+- [x] Documentar formato de instrução (16 bits: opcode+operand)
+- [x] Macros helper (MAKE_INSTRUCTION, GET_OPCODE, GET_OPERAND)
 
-### Interpretação
-- [ ] `fetch_instruction()` - Busca instrução macro
-- [ ] `decode_opcode()` - IR → endereço microrotina
-- [ ] Tabela de desvio (256 entradas)
-- [ ] Implementar TIR (Temporary IR)
+### FASE 6B - Core Instructions (PENDENTE)
+- [ ] Implementar microcode completo para LODD
+- [ ] Implementar microcode completo para STOD
+- [ ] Implementar microcode completo para ADDD
+- [ ] Implementar microcode completo para LOCO
+- [ ] Implementar microcode completo para JUMP
+- [ ] Implementar microcode completo para HALT
+- [ ] Criar programa de teste: soma dois números
+- [ ] Validar fetch-decode-execute com ISA real
+
+### FASE 6C-6E - Extended ISA (FUTURO)
+- [ ] Conditional jumps (JPOS, JZER, JNEG, JNZE)
+- [ ] Stack operations (CALL, RETN, PUSH, POP, etc.)
+- [ ] Local addressing (LODL, STOL, ADDL, SUBL)
+- [ ] Complete 256-entry microprograma
 
 **Arquivos:**
-- `src/microcode.c` (novo - ~500 linhas)
-- `data/mic1_microcode.bin` (ROM image)
-- `include/microcode.h` (novo - opcodes)
+- `include/opcodes.h` (novo - 142 linhas) ✅
+- `data/mic1_microcode.txt` (novo - 220 linhas, templates) ✅
+- `docs/archsim_fase_log/FASE_6.txt` (novo - documentação) ✅
 
-**Validação:**
-- Executar LODD 100 (load de endereço 100)
-- Executar ADDD 101 (add de endereço 101)
-- Executar STOD 102 (store em endereço 102)
-- Executar JUMP 0 (loop infinito)
-- Executar HALT
+**Validação (FASE 6A):**
+- ✓ ISA architecture documented
+- ✓ Microprograma structure designed
+- ✓ Fetch-decode-execute framework
+- ⚠ Not yet executable (needs FASE 6B)
 
-**Tempo Estimado:** 8-12 horas
+**Tempo Estimado:** 8-12 horas total (6A: 2h ✅, 6B-6E: 6-10h pendentes)
+**Tempo Real (FASE 6A):** ~2 horas
 **Prioridade:** MÉDIA
+**Commits:** (pending)
 
 ---
 
@@ -559,7 +555,7 @@ ONE:    .WORD 1
 | 3 | ✅ | Memória + Cache | 45min | Alta |
 | 4 | ✅ | Unidade de controle | 4h | Alta |
 | 5 | ✅ | Ciclo de execução | 5h | Alta |
-| 6 | ⏳ | Microprograma completo | 8-12h | Média |
+| 6 | ⚠️ | Microprograma & ISA | 2h/8-12h | Média |
 | 7 | ⏳ | Loader + Montador | 6-8h | Média |
 | 8 | ⏳ | Programas exemplo | 4-5h | Baixa |
 | 9 | ⏳ | Testes completos | 6-8h | Alta |
@@ -624,11 +620,11 @@ ONE:    .WORD 1
 
 ## ESTIMATIVA TOTAL
 
-**Tempo já investido:** ~12 horas (Fases 0-5)
-**Tempo restante:** ~30-40 horas (Fases 6-10)
+**Tempo já investido:** ~14 horas (Fases 0-5, 6A)
+**Tempo restante:** ~28-38 horas (Fases 6B-10)
 **Tempo total:** ~45-55 horas
 
-**Progresso:** ~60% completo (Milestones 1 & 2 completos)
+**Progresso:** ~65% completo (Milestones 1 & 2 completos, ISA defined)
 
 ---
 
