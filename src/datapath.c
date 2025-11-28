@@ -3,7 +3,6 @@
 #include "../include/utils/conversions.h"
 
 void init_register_bank(register_bank *rb){
-    rb = (register_bank*) malloc(sizeof(register_bank));
     for(int i = 0; i < 4; i++) rb->AMASK.data[i] = 0;
     for(int i = 4; i < 16; i++) rb->AMASK.data[i] = 1;
     for(int i = 0; i < 16; i++){
