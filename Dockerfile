@@ -15,5 +15,8 @@ COPY . .
 # Compilar projeto
 RUN make clean && make
 
-# Comando padrão: executar simulador
+# Definir variável de ambiente para modo CI
+ENV CI=true
+
+# Comando padrão: executar simulador em modo não-interativo
 CMD ["./mic1_simulator"]

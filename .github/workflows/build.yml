@@ -16,5 +16,7 @@ jobs:
     - name: Build project
       run: make clean && make
       
-    - name: Run executable
+    - name: Run executable (non-interactive)
       run: ./mic1_simulator
+      env:
+        CI: true
