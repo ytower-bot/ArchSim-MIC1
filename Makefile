@@ -50,6 +50,11 @@ $(TARGET): $(OBJECTS)
 	@echo "[LD] $@"
 	@$(CC) $(OBJECTS) -o $(TARGET)
 
+# Create static library for CGO
+$(OBJDIR)/libmic1.a: $(LIB_OBJECTS)
+	@echo "[AR] $@"
+	@ar rcs $@ $(LIB_OBJECTS)
+
 # Debug build
 debug: CFLAGS += $(DEBUGFLAGS)
 debug: clean $(TARGET)
@@ -137,7 +142,7 @@ TUI_DIR = tui
 TUI_BIN = $(TUI_DIR)/archsim-tui
 GO = $(HOME)/go/bin/go
 
-tui:
+tui: $(OBJDIR)/libmic1.a
 	@echo "[GO] Building TUI..."
 	@cd $(TUI_DIR) && $(GO) build -o archsim-tui
 	@echo "[OK] TUI built successfully: $(TUI_BIN)"

@@ -14,6 +14,7 @@ type model struct {
 	stateViewport viewport.Model
 
 	// State
+	cpuWrapper    *CPUWrapper
 	cpu           CPUState
 	sourceCode    []string
 	currentLine   int
@@ -49,7 +50,10 @@ type CacheStats struct {
 }
 
 func initialModel() model {
+	wrapper := NewCPUWrapper()
+	
 	return model{
+		cpuWrapper: wrapper,
 		cpu: CPUState{
 			PC:     0x0000,
 			AC:     0x0000,
@@ -70,6 +74,23 @@ func initialModel() model {
 
 func (m model) Init() tea.Cmd {
 	return nil
+}
+
+func (m *model) syncCPUState() {
+	m.cpu.PC = m.cpuWrapper.GetPC()
+	m.cpu.AC = m.cpuWrapper.GetAC()
+	m.cpu.SP = m.cpuWrapper.GetSP()
+	m.cpu.IR = m.cpuWrapper.GetIR()
+	m.cpu.TIR = m.cpuWrapper.GetTIR()
+	m.cpu.MPC = m.cpuWrapper.GetMPC()
+	m.cpu.Cycles = m.cpuWrapper.GetCycles()
+	m.cpu.Clock = m.cpuWrapper.GetClock()
+	m.cpu.N = m.cpuWrapper.GetFlagN()
+	m.cpu.Z = m.cpuWrapper.GetFlagZ()
+	m.cpu.CacheStats.DataHits = m.cpuWrapper.GetDataCacheHits()
+	m.cpu.CacheStats.DataMisses = m.cpuWrapper.GetDataCacheMisses()
+	m.cpu.CacheStats.InstHits = m.cpuWrapper.GetInstCacheHits()
+	m.cpu.CacheStats.InstMisses = m.cpuWrapper.GetInstCacheMisses()
 }
 
 func (m model) getStatusLine() string {

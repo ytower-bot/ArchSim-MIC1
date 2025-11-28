@@ -93,3 +93,4 @@ Thumbs.db
 *.temp
 *.bak
 *.log
+obj/libmic1.a
