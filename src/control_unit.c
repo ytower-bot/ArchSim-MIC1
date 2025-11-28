@@ -448,3 +448,43 @@ void run_mmux(mmux* m, mpc* p, mir* mir) {
         increment_mpc(p);
     }
 }
+
+/**
+ * @brief Initialize AMUX structure
+ *
+ * @param a Pointer to AMUX structure
+ *
+ * Initializes the AMUX control signal to 0 (selects Latch A as default).
+ */
+void init_amux(amux* a) {
+    if (!a) {
+        return;
+    }
+    a->control_amux = 0;
+}
+
+/**
+ * @brief Execute AMUX operation - Select ALU input A source
+ *
+ * @param a  Pointer to AMUX structure
+ * @param mb Pointer to MBR structure
+ * @param lA Pointer to Latch A structure
+ * @param u  Pointer to ALU structure
+ *
+ * This function selects the source for ALU input A based on control_amux:
+ * - control_amux = 0: Copy Latch A data to ALU input A
+ * - control_amux = 1: Copy MBR data to ALU input A
+ *
+ * The selected data is copied to u->input_a[16].
+ */
+void run_amux(amux* a, mbr* mb, latch* lA, alu* u) {
+    if (!a || !mb || !lA || !u) {
+        return;
+    }
+
+    if (a->control_amux == 0) {
+        copy_data(u->input_a, lA->data);
+    } else {
+        copy_data(u->input_a, mb->data);
+    }
+}
