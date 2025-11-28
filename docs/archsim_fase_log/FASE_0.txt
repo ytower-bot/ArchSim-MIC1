@@ -1,0 +1,45 @@
+═══════════════════════════════════════════════════════════════
+FASE_0 - CORREÇÃO DE BUG CRÍTICO
+═══════════════════════════════════════════════════════════════
+
+DATA: 27/11/2024
+STATUS: ✅ COMPLETA
+
+OBJETIVO
+--------
+Corrigir bug de malloc desnecessário em datapath.c que causava memory leak.
+
+BUG IDENTIFICADO
+----------------
+Arquivo: src/datapath.c:5
+Problema: malloc() desnecessário para ponteiro já válido (passado como parâmetro)
+Linha: rb = (register_bank*) malloc(sizeof(register_bank));
+
+SOLUÇÃO IMPLEMENTADA
+--------------------
+- Removido malloc() desnecessário
+- Ponteiro rb já é válido (parâmetro da função)
+- Memory leak eliminado
+
+VALIDAÇÃO
+---------
+✓ Compilação: Sucesso sem erros
+✓ Execução: ./mic1_simulator roda corretamente
+✓ Testes: Nenhum crash ou vazamento de memória
+
+COMMITS
+-------
+ffe0d4e - fix: remove unnecessary malloc in init_register_bank (FASE_0)
+
+ARQUIVOS MODIFICADOS
+--------------------
+- src/datapath.c (1 linha removida)
+
+TEMPO ESTIMADO: 15 minutos
+TEMPO REAL: 15 minutos
+
+IMPACTO
+-------
+- Bug crítico corrigido
+- Código mais limpo e seguro
+- Base estável para próximas fases
