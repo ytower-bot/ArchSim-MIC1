@@ -1,562 +1,366 @@
-# ArchSim-MIC1 - Análise e Plano de Estruturação
+# PROJECT ANALYSIS - ArchSim-MIC1
 
-**Data:** 2025-11-25
-**Status:** Em Desenvolvimento
-**Objetivo:** Simulador completo da microarquitetura MIC-1
+**Data:** 28/11/2025
+**Status:** Em Desenvolvimento - Fases 0-3 Completas
+**Objetivo:** Simulador da Microarquitetura MIC-1
 
 ---
 
-## 1. SITUAÇÃO ATUAL
+## O QUE É O PROJETO
 
-### 1.1 Problema Identificado
-- **Erro de Compilação:** `src/memoryini.c` está incompleto (função main sem fechamento)
-- **Projeto não roda:** Necessário corrigir erros e implementar funcionalidades faltantes
+Simulador completo da arquitetura MIC-1 (Micro-1) implementado em C, baseado na especificação do livro "Structured Computer Organization" de Andrew S. Tanenbaum.
 
-### 1.2 Estrutura de Arquivos Existente
+**Propósito:**
+- Simular execução de microinstruções MIC-1
+- Implementar via de dados completa com 16 registradores
+- Sistema de memória com cache (mapeamento direto)
+- Unidade de controle microprogramada
+- Interface interativa para debug e execução
+
+---
+
+## ESTADO ATUAL
+
+### ✅ COMPLETO (Fases 0-3)
+
+#### FASE 0 - Bug Fix Crítico
+- Removido malloc desnecessário em `init_register_bank`
+- Memory leak eliminado
+- Projeto compila sem erros
+
+#### FASE 1 - Funções de Conversão (9/9 testes)
+- `bits_to_int()` - Array de bits → inteiro
+- `int_to_bits()` - Inteiro → array de bits
+- `address_to_int()` - 12 bits → endereço (0-4095)
+- `int_to_address()` - Inteiro → 12 bits
+- `copy_data()` - Cópia de arrays 16 bits
+
+**Arquivos:** `include/utils/conversions.h`, `src/utils/conversions.c`
+
+#### FASE 2 - Componentes Datapath
+- **Shifter:** `run_shifter()`, `get_shifter_control_value()`
+- **Decoders A/B:** `run_decoder()`, `select_register()`
+- **Decoder C:** `run_decoderC()` com sinal ENC
+- **MAR/MBR:** Integração com memória (RD/WR/MBR)
+
+**Arquivos:** `src/shifter.c`, `src/datapath.c`
+
+#### FASE 3 - Sistema de Memória
+- **Memória Principal:** 4096 palavras × 16 bits
+  - `init_memory()`, `m_read()`, `m_write()`
+  - `load_program()` - carrega arquivo binário
+- **Cache:** 8 linhas × 4 palavras (mapeamento direto)
+  - `cache_lookup()` - hit/miss detection
+  - `cache_read()` / `cache_write()` - write-through
+  - Decomposição: tag[7] | line[3] | word[2]
+  - Estatísticas: hits, misses, hit rate
+
+**Arquivos:** `src/memory.c`, `src/cache.c`
+
+### ✅ ESTRUTURAS DEFINIDAS
+
+**Via de Dados:**
+- 16 registradores × 16 bits (PC, AC, IR, TIR, SP, AMASK, SMASK, 0, +1, -1, A-F)
+- Latches A/B, Decoders A/B/C
+- ALU (4 operações), Shifter, AMUX
+- MAR (12 bits), MBR (16 bits)
+
+**Unidade de Controle:**
+- MIR (32 bits), MPC (8 bits), MMUX
+- Memória de controle (79 microinstruções)
+
+**Headers:** Todos em `include/` (alu.h, cache.h, datapath.h, memory.h, shifter.h, control_unit.h, etc.)
+
+### ⚠️ IMPLEMENTADO PARCIALMENTE
+
+**ALU (src/alu.c):**
+- ✅ `alu_add()` - Soma com complemento de 2
+- ✅ `alu_and()` - AND bit a bit
+- ✅ `alu_pass_a()` - Passa A
+- ✅ `alu_not_a()` - NOT A
+- ✅ `update_flags()` - N/Z flags
+- ✅ `run_alu()` - Executa baseado em control[2]
+
+**Shifter (src/shifter.c):**
+- ✅ `lshift()`, `rshift()` - Deslocamento 1 bit
+- ✅ `run_shifter()` - Executa baseado em control_sh[2]
+
+**Interface (src/main.c):**
+- ✅ Menu interativo completo
+- ✅ Comandos: run, step, status, registers, memory, help, quit
+
+### ❌ PENDENTE (Fases 4+)
+
+**Unidade de Controle:**
+- MIR: Decodificação de 32 bits → sinais
+- MPC: Incremento e carregamento
+- MMUX: Lógica de desvio condicional (N/Z flags)
+- Microprograma: Definir 79 microinstruções
+
+**Ciclo de Execução:**
+- Fetch → Decode → Execute → Update
+- Sincronização entre componentes
+- Pipeline completo
+
+**Programas:**
+- Loader binário funcional
+- Montador (assembly → binário)
+- Programas de teste (fibonacci, fatorial, etc.)
+
+---
+
+## COMO ESTÁ ESTRUTURADO
 
 ```
 ArchSim-MIC1/
 ├── src/
-│   ├── main.c           ✅ Completo (interface interativa)
-│   ├── mic1.c           ⚠️  Stubs (estrutura pronta, lógica pendente)
-│   ├── datapath.c       ⚠️  Incompleto
-│   ├── memoryini.c      ❌ Erro de sintaxe
-│   └── memoryread.c     ⚠️  Desconhecido
+│   ├── main.c              # Interface interativa
+│   ├── mic1.c              # Core (init, reset, cycle)
+│   ├── alu.c               # ALU completo
+│   ├── shifter.c           # Shifter completo
+│   ├── datapath.c          # Decoders, registers
+│   ├── memory.c            # Memória principal
+│   ├── memoryread.c        # Helper de leitura
+│   ├── memoryini.c         # Inicialização antiga
+│   ├── cache.c             # Cache completo
+│   ├── utils/
+│   │   └── conversions.c   # Conversões bit/int
+│   └── tests/
+│       ├── test_alu.c      # Testes ALU
+│       └── test_conversions.c  # Testes conversões
+│
 ├── include/
-│   ├── mic1.h           ✅ Estrutura principal definida
-│   ├── datapath.h       ✅ Estruturas definidas
-│   ├── alu.h            ✅ Estruturas definidas
-│   ├── memory.h         ✅ Estruturas definidas
-│   ├── shifter.h        ✅ Estruturas definidas
-│   ├── control_unit.h   ✅ Estruturas definidas
-│   ├── cache.h          ✅ Estruturas definidas
-│   ├── connections.h    ⚠️  Não analisado
+│   ├── mic1.h              # Estrutura principal CPU
+│   ├── alu.h               # ALU interface
+│   ├── cache.h             # Cache interface
+│   ├── datapath.h          # Registradores, decoders
+│   ├── memory.h            # Memória interface
+│   ├── shifter.h           # Shifter interface
+│   ├── control_unit.h      # MIR, MPC, MMUX
+│   ├── connections.h       # Barramento C
 │   └── utils/
-│       └── conversions.h ⚠️  Não analisado
-└── Makefile             ✅ Estrutura correta
+│       └── conversions.h   # Utils
+│
+├── docs/
+│   └── archsim_fase_log/   # Logs das fases 0-3
+│
+├── .github/workflows/
+│   └── build.yml           # CI/CD GitHub Actions
+│
+├── Dockerfile              # Container para build
+├── Makefile                # Build system
+└── README.md               # Especificação completa
+```
 
-✅ Completo e funcional
-⚠️  Parcial ou desconhecido
-❌ Com problemas
+**Tamanho:** ~1762 linhas de código C
+
+---
+
+## COMO PODE SER TESTADO
+
+### Compilação
+```bash
+make clean
+make
+```
+
+### Execução
+```bash
+./mic1_simulator
+```
+
+### Comandos Disponíveis
+```
+> help         # Lista comandos
+> status       # Estado da CPU
+> registers    # Dump dos 16 registradores
+> memory <start> <end>  # Faixa de memória
+> step         # Executa 1 ciclo
+> run          # Executa continuamente
+> quit         # Sair
+```
+
+### Testes Unitários (Implementados)
+```bash
+# Testes de conversão (FASE 1)
+./test_conversions
+# 9/9 testes passando
+
+# Testes ALU (parcial)
+./test_alu
+```
+
+### Testes Manuais Possíveis
+1. **Registradores:** Verificar inicialização (0, +1, -1, AMASK, SMASK)
+2. **ALU:** Testar 4 operações com valores conhecidos
+3. **Shifter:** Testar left/right shift
+4. **Memória:** Escrever e ler endereços
+5. **Cache:** Verificar hits/misses com acesso sequencial
+
+---
+
+## CARACTERÍSTICAS TÉCNICAS
+
+### Microarquitetura MIC-1
+
+**Via de Dados:**
+- Largura: 16 bits
+- Registradores: 16 (nomeados + genéricos)
+- ALU: 4 operações (A+B, A AND B, A, NOT A)
+- Shifter: 3 modos (none, left, right)
+- Barramento C: conecta shifter → registradores
+
+**Memória:**
+- Principal: 4096 palavras × 16 bits (endereço 12 bits)
+- Cache: 8 linhas × 4 palavras (mapeamento direto)
+- Política: Write-through
+- Decomposição endereço: Tag(7) | Line(3) | Word(2)
+
+**Unidade de Controle:**
+- Microprogramada (ROM)
+- MIR: 32 bits
+  - AMUX(1) | COND(2) | ALU(2) | SH(2) | MBR(1) | MAR(1) | RD(1) | WR(1) | ENC(1) | C(4) | B(4) | A(4) | ADDR(8)
+- MPC: 8 bits (endereça 256 microinstruções)
+- Conjunto: 79 microinstruções definidas
+
+**Ciclo de Clock:**
+- Fetch microinstrução (MPC → ROM → MIR)
+- Decode sinais de controle (MIR → componentes)
+- Execute operação (Datapath)
+- Update MPC (MMUX decide próximo endereço)
+
+---
+
+## DEPENDÊNCIAS
+
+### Build
+- GCC ou Clang (C99)
+- Make
+- stdint.h, string.h, stdio.h, stdlib.h
+
+### Runtime
+- Linux/Unix (testado)
+- macOS (compatível)
+- Windows (via WSL ou MinGW)
+
+### Docker (Opcional)
+```dockerfile
+FROM gcc:latest
+WORKDIR /app
+COPY . .
+RUN make
+CMD ["./mic1_simulator"]
 ```
 
 ---
 
-## 2. COMPONENTES DO MIC-1
+## DECISÕES DE DESIGN
 
-### 2.1 Via de Dados (Datapath)
+### Já Decididas
+1. **Endianess:** Big-endian (bit[0] = MSB)
+2. **Tamanho de palavra:** 16 bits
+3. **Cache:** Mapeamento direto, write-through
+4. **Registradores:** Estrutura nomeada (não array)
+5. **Conversões:** Funções dedicadas (não macros)
+6. **Interface:** CLI interativa (não GUI)
 
-#### Registradores (16 bits cada)
-- **PC** - Program Counter
-- **AC** - Accumulator
-- **IR** - Instruction Register
-- **TIR** - Temporary Instruction Register
-- **SP** - Stack Pointer (inicial: 4096)
-- **AMASK** - Address Mask (0000111111111111)
-- **SMASK** - Sign Mask (0000000011111111)
-- **0** - Constante 0
-- **+1** - Constante 1
-- **-1** - Constante -1
-- **A, B, C, D, E, F** - Registradores de propósito geral
-
-**Status:** ✅ Estruturas definidas em `datapath.h`
-
-#### Latches A e B
-- Armazenam valores dos registradores
-- Latch A → AMUX → ULA entrada A
-- Latch B → MAR e ULA entrada B
-
-**Status:** ✅ Estruturas definidas
-
-#### Decoders A, B e C
-- Decoder A/B: Selecionam registrador fonte (4 bits de controle)
-- Decoder C: Seleciona registrador destino (4 bits + ENC)
-
-**Status:** ✅ Estruturas definidas, ⚠️ Lógica não implementada
-
-#### MAR (Memory Address Register)
-- 12 bits de endereço
-- Recebe valor do Latch B quando control_mar = 1
-
-**Status:** ✅ Estrutura definida, ⚠️ Lógica stub
-
-#### MBR (Memory Buffer Register)
-- 16 bits de dados
-- Controles: RD, WR, MBR
-- Interface com memória e AMUX
-
-**Status:** ✅ Estrutura definida, ⚠️ Lógica stub
-
-#### ULA (ALU)
-- 4 operações: A+B, A AND B, A, NOT A
-- 2 flags: N (negativo), Z (zero)
-- Controle de 2 bits
-
-**Status:** ✅ Estrutura definida, ⚠️ Operações não implementadas
-
-#### Deslocador (Shifter)
-- Operações: None, Left Shift, Right Shift
-- Controle de 2 bits (SH)
-- Entrada: saída da ULA
-
-**Status:** ✅ Estrutura definida, ⚠️ Lógica não implementada
-
-#### AMUX
-- Multiplexador: Latch A ou MBR → ULA
-- Controle de 1 bit
-
-**Status:** ✅ Estrutura definida, ⚠️ Lógica stub
+### Pendentes
+1. **Microprograma:** Criar manualmente ou tool?
+2. **Assembly syntax:** Definir formato exato
+3. **Loader format:** Binário puro ou com header?
+4. **Debug level:** Quanto logging?
+5. **Testes:** Suite automática ou manual?
 
 ---
 
-### 2.2 Unidade de Controle
+## MÉTRICAS
 
-#### MIR (Microinstruction Register)
-- 32 bits divididos em sinais de controle:
-  - [0]: AMUX
-  - [1-2]: COND
-  - [3-4]: ALU
-  - [5-6]: SH
-  - [7]: MBR
-  - [8]: MAR
-  - [9]: RD
-  - [10]: WR
-  - [11]: ENC
-  - [12-15]: C (decoder C)
-  - [16-19]: B (decoder B)
-  - [20-23]: A (decoder A)
-  - [24-31]: ADDR (endereço)
+**Código Implementado:**
+- Linhas: ~1762
+- Arquivos: 12 .c + 9 .h
+- Funções: ~80+
+- Testes: 9 unitários (conversões)
 
-**Status:** ✅ Estrutura definida, ⚠️ Decodificação não implementada
+**Cobertura Funcional:**
+- Via de Dados: ~70%
+- Memória: ~90%
+- Unidade de Controle: ~10%
+- Ciclo Execução: 0%
+- Microprograma: 0%
 
-#### MPC (Microprogram Counter)
-- 8 bits de endereço
-- Aponta para próxima microinstrução
-
-**Status:** ✅ Estrutura definida, ⚠️ Lógica stub
-
-#### MMUX (Micro Address Multiplexer)
-- Condições de desvio (COND):
-  - 00: Nenhum desvio
-  - 01: Desvia se N=1
-  - 10: Desvia se Z=1
-  - 11: Desvia sempre
-
-**Status:** ✅ Estrutura definida, ⚠️ Lógica não implementada
-
-#### Memória de Controle
-- 79 microinstruções (MICROPROGRAM_SIZE)
-- 32 bits cada
-
-**Status:** ✅ Estrutura definida, ❌ Sem microprograma
+**Status Geral:** ~45% completo
 
 ---
 
-### 2.3 Memória
+## PRÓXIMAS ETAPAS
 
-#### Memória Principal
-- 4096 posições
-- 16 bits por palavra
-- Endereçamento de 12 bits
+**Imediato (Fase 4):**
+1. Implementar `run_mir()` - distribuir sinais
+2. Implementar `run_mpc()` - incremento/carregamento
+3. Implementar `run_mmux()` - lógica de desvio
+4. Definir microprograma básico (10-20 instruções)
 
-**Status:** ⚠️ Estrutura básica, implementação incompleta
+**Curto Prazo (Fase 5):**
+5. Ciclo completo MIC-1 (fetch-decode-execute)
+6. Conectar todos os componentes
+7. Testar execução de microinstruções simples
 
-#### Cache
-- **Tipo:** Mapeamento Direto
-- **Linhas:** 8 (3 bits de índice)
-- **Palavras por linha:** 4 (2 bits de offset)
-- **Tag:** 7 bits
-- **Política de escrita:** Write-through
-- **Política de substituição:** Substituição direta
+**Médio Prazo (Fases 6-7):**
+8. Microprograma completo (79 instruções)
+9. Loader binário
+10. Montador assembly
 
-**Endereço (12 bits):**
-```
-| Tag (7 bits) | Linha (3 bits) | Palavra (2 bits) |
-```
-
-**Status:** ✅ Estrutura completa definida, ⚠️ Operações não implementadas
-
----
-
-## 3. MAPEAMENTO: IMPLEMENTADO vs PENDENTE
-
-### ✅ JÁ IMPLEMENTADO
-1. **Estruturas de dados:** Todas definidas nos headers
-2. **main.c:** Interface interativa completa
-3. **Funções stub:** Esqueleto de todas as funções
-4. **Makefile:** Sistema de build funcional
-5. **Inicialização básica:** Estrutura de CPU
-
-### ⚠️ PARCIALMENTE IMPLEMENTADO
-1. **mic1.c:** Funções básicas, mas sem lógica real
-2. **Cache stats:** Funções de estatísticas prontas
-3. **Estruturas:** Definidas mas não funcionais
-
-### ❌ NÃO IMPLEMENTADO
-1. **Lógica da ULA:** Operações aritméticas/lógicas
-2. **Lógica dos Decoders:** Seleção de registradores
-3. **Operações de memória:** Leitura/escrita real
-4. **Cache:** Lookup, load block, hit/miss
-5. **Shifter:** Operações de deslocamento
-6. **MAR/MBR:** Comunicação com memória
-7. **Unidade de Controle:** Execução de microinstruções
-8. **Ciclo de execução:** Fetch-decode-execute
-9. **Microprograma:** Definição das 79 microinstruções
-10. **Montador:** Tradução assembly → binário
-11. **Loader:** Carregar programas na memória
-12. **Conversões:** Binário ↔ inteiro para endereços
+**Longo Prazo (Fase 8):**
+11. Suite de testes completa
+12. Programas exemplo (fibonacci, fatorial)
+13. Documentação final
 
 ---
 
-## 4. PROBLEMAS URGENTES
+## PROBLEMAS CONHECIDOS
 
-### 🔴 Crítico (Impede compilação)
-1. **memoryini.c:** Função main incompleta
-   - Falta: fechamento da função, return, liberação de memória
+### Resolvidos
+- ✅ malloc desnecessário em datapath (FASE_0)
+- ✅ Faltavam funções de conversão (FASE_1)
+- ✅ Componentes datapath incompletos (FASE_2)
+- ✅ Sistema de memória não funcional (FASE_3)
 
-### 🟡 Importante (Funcionalidade)
-2. **Falta lógica central:** Componentes definidos mas não funcionam
-3. **Sem microprograma:** Sistema não pode executar instruções
-4. **Conversões ausentes:** Não há tradução binário/inteiro
-
-### 🟢 Desejável (Melhorias)
-5. **Testes:** Nenhum teste implementado
-6. **Documentação de código:** Comentários mínimos
-7. **Validação de entrada:** Sem checks de erro
-8. **Logging:** Debug limitado
+### Pendentes
+- ⚠️ Unidade de controle não executa microinstruções
+- ⚠️ Ciclo de clock não implementado
+- ⚠️ Microprograma não definido
+- ⚠️ Loader não funciona
+- ⚠️ Sem montador assembly
 
 ---
 
-## 5. DEPENDÊNCIAS ENTRE COMPONENTES
+## REFERÊNCIAS
 
-```
-Execução de Programa
-    ↓
-Ciclo MIC-1
-    ├── Unidade de Controle
-    │   ├── MPC → Memória de Controle → MIR
-    │   ├── MIR → Decodifica sinais
-    │   └── MMUX → Decide próximo MPC
-    │
-    └── Via de Dados
-        ├── Decoders A/B → Latches A/B
-        ├── AMUX → seleciona entrada ULA
-        ├── ULA → operação
-        ├── Shifter → desloca resultado
-        ├── Decoder C → grava em registrador
-        └── MAR/MBR ↔ Cache ↔ Memória
-```
+**Livro Base:**
+- "Structured Computer Organization" (6th ed.) - Andrew S. Tanenbaum
+- Capítulo 4: The Microarchitecture Level
 
-**Ordem de implementação lógica:**
-1. Utilitários (conversões)
-2. Componentes básicos (ULA, Shifter)
-3. Registradores e Decoders
-4. Memória e Cache
-5. Unidade de Controle
-6. Ciclo de execução
-7. Microprograma
-8. Loader e Montador
+**Arquivos Chave:**
+- `README.md` - Especificação completa da arquitetura
+- `docs/archsim_fase_log/` - Logs de implementação
+- `include/mic1.h` - Estrutura principal da CPU
+- `PROJECT_ANALYSIS.md` - Este arquivo
+- `ROADMAP.md` - Plano de implementação
 
----
-
-## 6. PLANO DE AÇÃO RECOMENDADO
-
-### Fase 1: CORRIGIR PROBLEMAS URGENTES
-**Objetivo:** Fazer o projeto compilar
-
-**Tasks:**
-1. Corrigir `memoryini.c`
-2. Adicionar código de liberação de memória
-3. Testar compilação
-
-**Resultado esperado:** `make` compila sem erros
-
----
-
-### Fase 2: IMPLEMENTAR COMPONENTES BÁSICOS
-**Objetivo:** Componentes fundamentais funcionando
-
-**Tasks:**
-1. Implementar operações da ULA
-   - Soma binária
-   - AND lógico
-   - Pass A
-   - NOT A
-   - Atualização de flags N/Z
-2. Implementar Shifter
-   - Left shift
-   - Right shift
-3. Implementar funções de conversão
-   - Binário → inteiro
-   - Inteiro → binário
-   - Operações com arrays de bits
-4. Implementar Decoders
-   - Decoder A/B: seleção de registrador fonte
-   - Decoder C: escrita em registrador destino
-
-**Resultado esperado:** Componentes básicos testáveis isoladamente
-
----
-
-### Fase 3: MEMÓRIA E CACHE
-**Objetivo:** Sistema de memória funcionando
-
-**Tasks:**
-1. Implementar Memória Principal
-   - Alocação de 4096 palavras
-   - Read/Write
-   - Inicialização
-2. Implementar Cache
-   - Decomposição de endereço (tag, linha, offset)
-   - Cache lookup (hit/miss)
-   - Cache load block
-   - Write-through
-3. Implementar MAR/MBR
-   - Comunicação com cache
-   - Sinais de controle RD/WR/MBR/MAR
-
-**Resultado esperado:** Leitura/escrita em memória com cache funcional
-
----
-
-### Fase 4: UNIDADE DE CONTROLE
-**Objetivo:** Executar microinstruções
-
-**Tasks:**
-1. Implementar MIR
-   - Decodificação de microinstrução em sinais
-   - Distribuição de sinais para componentes
-2. Implementar MPC
-   - Incremento
-   - Carregamento de novo endereço
-3. Implementar MMUX
-   - Lógica de desvio condicional
-   - Leitura de flags da ULA
-4. Criar microprograma básico
-   - Definir algumas microinstruções de teste
-   - Implementar loader de microprograma
-
-**Resultado esperado:** Sistema executa microinstruções simples
-
----
-
-### Fase 5: CICLO DE EXECUÇÃO
-**Objetivo:** Simulador executando programas
-
-**Tasks:**
-1. Implementar ciclo completo MIC-1
-   - Fetch microinstrução
-   - Decode (MIR)
-   - Execute (componentes)
-   - Update (MPC)
-2. Conectar todos os componentes
-   - Datapath completo
-   - Control unit completo
-   - Sincronização
-3. Implementar HALT
-   - Condição de parada
-   - Finalização limpa
-
-**Resultado esperado:** Simulador executa sequência de microinstruções
-
----
-
-### Fase 6: MICROPROGRAMA COMPLETO
-**Objetivo:** Executar instruções macro
-
-**Tasks:**
-1. Definir conjunto de instruções macro
-   - LOAD, STORE
-   - ADD, SUB
-   - AND, OR
-   - JUMP, BRANCH
-   - HALT
-2. Implementar 79 microinstruções
-   - Seguir especificação MIC-1
-   - Documentar cada microinstrução
-3. Implementar interpretação de IR
-   - Fetch de instrução macro
-   - Desvio para microrotina correta
-
-**Resultado esperado:** Simulador executa instruções MIC-1 completas
-
----
-
-### Fase 7: MONTADOR E LOADER
-**Objetivo:** Carregar programas externos
-
-**Tasks:**
-1. Implementar loader binário
-   - Ler arquivo binário
-   - Carregar em memória
-   - Validar formato
-2. Implementar montador simples
-   - Parser de assembly
-   - Geração de binário
-   - Tabela de símbolos
-3. Criar programas de teste
-   - Fibonacci
-   - Fatorial
-   - Soma de array
-
-**Resultado esperado:** Executar programas assembly completos
-
----
-
-### Fase 8: TESTES E REFINAMENTOS
-**Objetivo:** Sistema robusto e validado
-
-**Tasks:**
-1. Criar suite de testes
-   - Testes unitários por componente
-   - Testes de integração
-   - Testes de programas completos
-2. Adicionar validações
-   - Check de ponteiros nulos
-   - Validação de endereços
-   - Detecção de overflow
-3. Melhorar interface
-   - Comandos adicionais
-   - Visualização de estado
-   - Debug step-by-step
-4. Documentação
-   - Comentários de código
-   - Manual de uso
-   - Exemplos
-
-**Resultado esperado:** Sistema completo, testado e documentado
-
----
-
-## 7. ESTRUTURA DE ARQUIVOS PROPOSTA
-
-```
-ArchSim-MIC1/
-├── src/
-│   ├── main.c                 # [Existe] Interface
-│   ├── mic1.c                 # [Existe] Core
-│   ├── components/            # [CRIAR] Componentes
-│   │   ├── alu.c
-│   │   ├── shifter.c
-│   │   ├── decoders.c
-│   │   ├── mar_mbr.c
-│   │   └── registers.c
-│   ├── control/               # [CRIAR] Controle
-│   │   ├── mir.c
-│   │   ├── mpc.c
-│   │   ├── mmux.c
-│   │   └── microprogram.c
-│   ├── memory/                # [CRIAR] Memória
-│   │   ├── main_memory.c
-│   │   ├── cache.c
-│   │   └── memory_ops.c
-│   ├── utils/                 # [CRIAR] Utilidades
-│   │   ├── conversions.c
-│   │   ├── binary_ops.c
-│   │   └── file_io.c
-│   └── assembler/             # [CRIAR] Montador
-│       ├── parser.c
-│       ├── assembler.c
-│       └── loader.c
-├── include/                   # [Existe] Headers
-├── programs/                  # [CRIAR] Programas
-│   ├── examples/
-│   │   ├── fibonacci.asm
-│   │   ├── factorial.asm
-│   │   └── sum_array.asm
-│   └── microcode/
-│       └── mic1_microcode.bin
-├── tests/                     # [CRIAR] Testes
-│   ├── test_alu.c
-│   ├── test_cache.c
-│   ├── test_memory.c
-│   └── test_integration.c
-└── docs/                      # [CRIAR] Documentação
-    ├── ARCHITECTURE.md
-    ├── MICROCODE.md
-    └── ASSEMBLY_GUIDE.md
-```
-
----
-
-## 8. ESTIMATIVA DE COMPLEXIDADE
-
-| Fase | Complexidade | Tarefas | Prioridade |
-|------|--------------|---------|------------|
-| 1. Correções | 🟢 Baixa | 3 | 🔴 Crítica |
-| 2. Componentes Básicos | 🟡 Média | 8-10 | 🔴 Alta |
-| 3. Memória e Cache | 🟡 Média | 6-8 | 🔴 Alta |
-| 4. Unidade Controle | 🟠 Alta | 8-10 | 🟡 Média |
-| 5. Ciclo Execução | 🟠 Alta | 5-7 | 🟡 Média |
-| 6. Microprograma | 🔴 Muito Alta | 79+ | 🟡 Média |
-| 7. Montador/Loader | 🟡 Média | 6-8 | 🟢 Baixa |
-| 8. Testes | 🟡 Média | 10+ | 🟢 Baixa |
-
----
-
-## 9. PRÓXIMOS PASSOS IMEDIATOS
-
-### Para começar AGORA:
-
-1. **Corrigir memoryini.c** (15 min)
-2. **Implementar ULA básica** (1-2h)
-3. **Implementar conversões binárias** (30min)
-4. **Testar componentes isolados** (30min)
-
-### Depois de funcionar básico:
-
-5. **Implementar Shifter** (1h)
-6. **Implementar Decoders** (1-2h)
-7. **Implementar memória principal** (1h)
-8. **Testar leitura/escrita** (30min)
-
----
-
-## 10. DECISÕES DE DESIGN PENDENTES
-
-**Você precisa decidir:**
-
-1. **Endianess:** Big-endian ou little-endian para arrays de bits?
-2. **Microprograma:** Criar manualmente ou gerar automaticamente?
-3. **Assembly syntax:** Seguir alguma sintaxe específica?
-4. **Cache write policy:** Confirmar write-through ou considerar write-back?
-5. **Registradores:** Manter estrutura nomeada ou usar array?
-6. **Debug output:** Quanto detalhe de logging?
-
----
-
-## 11. RECURSOS E REFERÊNCIAS
-
-**Livro base:** "Structured Computer Organization" - Andrew S. Tanenbaum
-
-**Especificação MIC-1:**
-- 16 registradores de 16 bits
-- 79 microinstruções
-- Memória 4096 palavras
-- 4 operações ALU
-- Conjunto instrução macro baseado em stack
-
-**Arquivos chave no projeto:**
-- `README.md` - Especificação detalhada
-- `include/*.h` - Estruturas definidas
-- `src/main.c` - Interface pronta
+**Commits Importantes:**
+- `ffe0d4e` - FASE_0: Fix malloc bug
+- `4611bef` - FASE_1: Conversion functions
+- (pendente) - FASE_2: Datapath components
+- (pendente) - FASE_3: Memory system
 
 ---
 
 ## CONCLUSÃO
 
-O projeto tem uma **base sólida de estruturas** mas necessita de **implementação da lógica**.
+**Estado:** Projeto em desenvolvimento ativo, ~45% completo.
 
-**Estratégia recomendada:**
-1. Começar pequeno (corrigir erros)
-2. Construir de baixo para cima (componentes → sistema)
-3. Testar incrementalmente
-4. Documentar decisões
+**Ponto Forte:** Base sólida de estruturas de dados e componentes de baixo nível (ALU, Shifter, Memória, Cache).
 
-**Primeira milestone:** Fazer ULA e Shifter funcionando com testes simples.
+**Próximo Milestone:** Implementar unidade de controle e executar primeira microinstrução completa.
 
-**Segunda milestone:** Sistema de memória (cache + main memory) funcional.
-
-**Terceira milestone:** Executar primeira microinstrução completa.
-
-Você está pronto para começar! 🚀
+**Estimativa:** 4-6 fases restantes para simulador completo funcional.
