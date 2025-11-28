@@ -43,7 +43,8 @@
 *.pdb
 
 # Kernel Module Compile Results
-*.mod*
+*.mod.c
+*.mod.o
 *.cmd
 .tmp_versions/
 modules.order
@@ -66,6 +67,7 @@ dkms.conf
 mic1_simulator
 tests/test_*
 !tests/test_*.c
+tui/archsim-tui
 
 # Build directories
 obj/
