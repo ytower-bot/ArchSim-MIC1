@@ -18,5 +18,6 @@ void lshift(shifter* s);
 void rshift(shifter* s);
 void init_shifter(shifter* s);
 int get_shifter_control_value(int control[2]);
+void run_shifter(shifter *s);
 
 #endif

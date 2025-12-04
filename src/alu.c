@@ -20,8 +20,8 @@ void set_alu_inputs(alu* a, int input_a[16], int input_b[16]) {
 }
 
 void set_alu_control(alu* a, int control) {
-    a->control[0] = control & 0x01;
-    a->control[1] = (control >> 1) & 0x01;
+    a->control[1] = control & 1;
+    a->control[0] = (control >> 1) & 1;
 }
 
 int is_zero(int data[16]) {
@@ -75,7 +75,7 @@ void alu_not_a(alu* a) {
 }
 
 void run_alu(alu* a) {
-    int ctrl = (a->control[1] << 1) | a->control[0];
+    int ctrl = (a->control[0] << 1) | a->control[1];
     
     switch (ctrl) {
         case 0:

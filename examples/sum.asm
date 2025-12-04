@@ -1,20 +1,13 @@
-; Exemplo 1: Soma de Dois Números
-; Autor: ArchSim-MIC1 Project
-; Descrição: Carrega dois números, soma e armazena o resultado
-;
-; Memória:
-;   100: primeiro número (10)
-;   101: segundo número (20)
-;   102: resultado (30)
+/ Programa Soma Inteiros para Mac-1
+/ Carrega 5, soma 10 e para.
 
-START:  LOCO 10      ; AC ← 10
-        STOD 100     ; Memory[100] ← AC
+START:  LODD NUM1   / Carrega 5 no AC
+        ADDD NUM2   / Soma 10
+        STOD RES    / Salva resultado (15) em RES
         
-        LOCO 20      ; AC ← 20
-        STOD 101     ; Memory[101] ← AC
-        
-        LODD 100     ; AC ← Memory[100]
-        ADDD 101     ; AC ← AC + Memory[101]
-        STOD 102     ; Memory[102] ← AC (resultado = 30)
-        
-        HALT         ; Fim
+DONE:   JUMP DONE   / Loop infinito (Halt)
+
+/ Dados (simulados no final da memoria)
+NUM1:   DW 5
+NUM2:   DW 10
+RES:    DW 0

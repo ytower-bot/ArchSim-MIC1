@@ -1,0 +1,246 @@
+# ==================================================================================
+# MICROCODIGO MIC-1 COMPLETO (Baseado na Imagem fornecida)
+# Formato: [AMUX:1][COND:2][ALU:2][SH:2][MBR:1][MAR:1][RD:1][WR:1][ENC:1][C:4][B:4][A:4][ADDR:8]
+# Regs: PC=0, AC=1, IR=2, TIR=3, SP=4, AMASK=5, SMASK=6, R0=7, R1=8, Rm1=9, A=10...
+# ==================================================================================
+
+# 00: mar := pc; rd;
+00010000011000000000000000000001
+
+# 01: pc := pc + 1; rd;
+00000000000100000000100000000010
+
+# 02: ir := mbr; if n then goto 28;
+10110000000100100000000000011100
+
+# 03: tir := lshift(ir + ir); if n then goto 19; (Adaptado: TIR = LSHIFT(IR))
+# Nota: Simulamos "ir+ir" usando shift left direto no IR
+00101101000100110010001000010011
+
+# 04: tir := lshift(tir); if n then goto 11;
+00110010000100110000001100001011
+
+# 05: alu := tir; if n then goto 9;
+00110000000000000000001100001001
+
+# 06: mar := ir; rd; (LODD)
+00010000011000000010000000000111
+
+# 07: rd;
+00010000001000000000000000001000
+
+# 08: ac := mbr; goto 0;
+11110000000100010000000000000000
+
+# 09: mar := ir; mbr := ac; wr; (STOD)
+00010000110000000010000100001010
+
+# 10: wr; goto 0;
+01110000000000000000000000000000
+
+# 11: alu := tir; if n then goto 15;
+00110000000000000000001100001111
+
+# 12: mar := ir; rd; (ADDD)
+00010000011000000010000000001101
+
+# 13: rd;
+00010000001000000000000000001110
+
+# 14: ac := mbr + ac; goto 0;
+11100000000100010001000000000000
+
+# 15: mar := ir; rd; (SUBD)
+00010000011000000010000000010000
+
+# 16: ac := ac + 1; rd;
+00000000000100011000000100010001
+
+# 17: a := inv(mbr); (Usando Reg A=10 como temp)
+10011000000110100000000000010010
+
+# 18: ac := ac + a; goto 0;
+01100000000100011010000100000000
+
+# 19: tir := lshift(ir); if n then goto 25;
+00110001000100110000001000011001
+
+# 20: alu := tir; if n then goto 23;
+00110000000000000000001100010111
+
+# 21: alu := ac; if n then goto 0; (JPOS - se N=0 cai aqui, se N=1 vai p/ 0)
+# A lógica da imagem é: se N goto 0 (não pula). Se não N, continua.
+00110000000000000000000100000000
+
+# 22: pc := band(ir, smask); goto 0; (Mask address bits)
+01101000000100000110001000000000
+
+# 23: alu := ac; if z then goto 22; (JZER - se Z=1 vai p/ 22 que pula)
+01010000000000000000000100010110
+
+# 24: goto 0; (Falha no JZER)
+01110000000000000000000000000000
+
+# 25: alu := ir; if n then goto 27;
+00110000000000000000001000011011
+
+# 26: pc := band(ir, amask); goto 0; (JUMP - Mask address 0FFF)
+01101000000100000101001000000000
+
+# 27: ac := band(ir, amask); goto 0; (LOCO)
+01101000000100010101001000000000
+
+# 28: tir := lshift(ir + ir); if n then goto 40; (High Opcode Check)
+# Adaptado para lshift(ir) apenas
+00101101000100110010001000101000
+
+# 29: tir := lshift(tir); if n then goto 35; (100x vs 101x)
+# Imagem diz goto 40, mas lógica binária aponta 35 para ADDL/SUBL
+00110010000100110000001100100011
+
+# 30: alu := ir; if n then goto 33; (LODL vs STOL)
+00110000000000000000001000100001
+
+# 31: a := ir + sp; (LODL - Calc addr)
+00000000000110100100001000100000
+
+# 32: mar := a; rd; goto 7; (LODL - Read)
+00010000011000001010000000000111
+
+# 33: a := ir + sp; (STOL - Calc addr)
+00000000000110100100001000100010
+
+# 34: mar := a; mbr := ac; wr; goto 10;
+00010000110000001010000000001010
+
+# 35: alu := ir; if n then goto 38; (ADDL vs SUBL)
+00110000000000000000001000100110
+
+# 36: a := ir + sp; (ADDL)
+00000000000110100100001000001101
+
+# 37: mar := a; rd; goto 13; (Vai p/ lógica de soma do ADDD)
+00010000011000001010000000001101
+
+# 38: a := ir + sp; (SUBL)
+00000000000110100100001000010000
+
+# 39: mar := a; rd; goto 16; (Vai p/ lógica de sub do SUBD)
+00010000011000001010000000010000
+
+# 40: tir := lshift(tir); if n then goto 46; (110x vs 111x)
+00110010000100110000001100101110
+
+# 41: alu := tir; if n then goto 44; (JNEG vs JNZE)
+00110000000000000000001100101100
+
+# 42: alu := ac; if n then goto 22; (JNEG - se N vai p/ 22 que pula)
+00110000000000000000000100010110
+
+# 43: goto 0;
+01110000000000000000000000000000
+
+# 44: alu := ac; if z then goto 0; (JNZE - se Z=1 não pula, vai p/ 0)
+01010000000000000000000100000000
+
+# 45: pc := band(ir, amask); goto 0; (JNZE Taken)
+01101000000100000101001000000000
+
+# 46: tir := lshift(tir); if n then goto 50; (CALL vs Stack Ops)
+00110010000100110000001100110010
+
+# 47: sp := sp + (-1); (CALL - Push PC)
+00000000000101001001010000110000
+
+# 48: mar := sp; mbr := pc; wr;
+00010000110000000100000000110001
+
+# 49: pc := band(ir, amask); wr; goto 0;
+01101000100100000101001000000000
+
+# 50: tir := lshift(tir); if n then goto 65; (1111 xxxx check)
+00110010000100110000001101000001
+
+# 51: tir := lshift(tir); if n then goto 59; (PSHI vs POPI?)
+00110010000100110000001100111011
+
+# 52: alu := tir; if n then goto 56; (PSHI vs ???)
+00110000000000000000001100111000
+
+# 53: mar := ac; rd; (PSHI - Push Indirect)
+00010000011000000000000100110110
+
+# 54: sp := sp + (-1); rd;
+00000000000101001001010000110111
+
+# 55: mar := sp; wr; goto 10;
+00010000100000000100000000001010
+
+# 56: mar := sp; sp := sp + 1; rd; (POPI - Pop Indirect)
+00010000010101001000010000111001
+
+# 57: rd;
+00010000001000000000000000111010
+
+# 58: mar := ac; wr; goto 10;
+00010000100000000000000100001010
+
+# 59: alu := tir; if n then goto 62; (PUSH vs POP)
+00110000000000000000001100111110
+
+# 60: sp := sp + (-1); (PUSH)
+00000000000101001001010000111101
+
+# 61: mar := sp; mbr := ac; wr; goto 10;
+00010000110000000100000000001010
+
+# 62: mar := sp; sp := sp + 1; rd; (POP)
+00010000010101001000010000111111
+
+# 63: rd;
+00010000001000000000000001000000
+
+# 64: ac := mbr; goto 0;
+11110000000100010000000000000000
+
+# 65: tir := lshift(tir); if n then goto 73; (RETN/SWAP vs INSP/DESP)
+00110010000100110000001101001001
+
+# 66: alu := tir; if n then goto 70; (RETN vs SWAP)
+00110000000000000000001101000110
+
+# 67: mar := sp; sp := sp + 1; rd; (RETN)
+00010000010101001000010001000100
+
+# 68: rd;
+00010000001000000000000001000101
+
+# 69: pc := mbr; goto 0;
+11110000000100000000000000000000
+
+# 70: a := ac; (SWAP)
+00001000000110100000000101000111
+
+# 71: ac := sp;
+00001000000100010000010001001000
+
+# 72: sp := a; goto 0;
+00001000000101001010000000000000
+
+# 73: alu := tir; if n then goto 76; (INSP vs DESP)
+00110000000000000000001101001100
+
+# 74: a := band(ir, smask); (INSP - Increment SP by offset)
+01101000000110100110001001001011
+
+# 75: sp := sp + a; goto 0;
+00000000000101001010010000000000
+
+# 76: a := band(ir, smask); (DESP - Decrement SP by offset)
+01101000000110100110001001001101
+
+# 77: a := inv(a);
+00111000000110101010000001001110
+
+# 78: a := a + 1; goto 75; (Completa complemento de 2)
+00000000000110101000100001001011

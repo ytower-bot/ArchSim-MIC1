@@ -1,6 +1,8 @@
 #ifndef DATAPATH_H
 #define DATAPATH_H
 
+struct shifter;
+
 // Individual register structure
 typedef struct mic1_register {
     int data[16];
@@ -49,11 +51,12 @@ typedef struct decoderC {
     int control_enc;
 } decoderC;
 
-void run_decoder(decoder* d, latch* l);
 void init_register(mic1_register*r);
 void init_register_bank(register_bank* rb);
 void init_decoder(decoder* d, register_bank* rb);
 void init_decoderC(decoderC* d, register_bank* rb);
-mic1_register* select_register(register_bank* rb, int control[4]);
+
+void run_decoder(decoder* d, latch* l);
+void run_decoderC(decoderC* d, struct shifter* s);
 
 #endif

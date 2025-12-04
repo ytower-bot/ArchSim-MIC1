@@ -1,108 +1,70 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../include/mic1.h"
 
-void print_banner() {
-    printf("========================================\n");
-    printf("        MIC-1 SIMULATOR - UFF/IC\n");
-    printf("        Computer Architecture\n");
-    printf("========================================\n");
-    printf("Version: 1.0 (Development)\n");
-    printf("Components: Datapath, Control Unit, Memory\n");
-    printf("========================================\n\n");
-}
-
-void demo_component_initialization(mic1_cpu* cpu) {
-    printf("=== COMPONENT INITIALIZATION ===\n");
-    printf("1. Initializing MIC-1 CPU...\n");
-    init_mic1(cpu);
-    printf("2. Initial register state:\n");
-    print_registers(cpu);
-    printf("3. Initial cache state:\n");
-    printf("   Data cache initialized\n");
-    printf("   Instruction cache initialized\n");
-    printf("4. CPU status: %s\n", cpu->running ? "RUNNING" : "STOPPED");
-    printf("================================\n\n");
-}
-
-void demo_program_loading() {
-    printf("=== PROGRAM LOADING ===\n");
-    printf("To load a program:\n");
-    printf("1. Microprogram: load_microprogram_file(cpu, \"micro.bin\")\n");
-    printf("2. Main program: load_program_file(cpu, \"program.bin\")\n");
-    printf("3. Execute: run_mic1_program(cpu)\n");
-    printf("=======================\n\n");
-}
-
-void demo_step_execution(mic1_cpu* cpu) {
-    printf("=== EXECUTION DEMO ===\n");
-    printf("Running 3 example cycles...\n");
-    for (int i = 0; i < 3; i++) {
-        printf("\n--- Cycle %d ---\n", i + 1);
-        printf("MPC: [simulated]\n");
-        printf("Microinstruction: [simulated]\n");
-        printf("ALU operation: [simulated]\n");
-        cpu->cycle_count++;
-    }
-    printf("\nTotal cycles executed: %d\n", cpu->cycle_count);
-    printf("==================\n\n");
-}
-
-void interactive_menu(mic1_cpu* cpu) {
-    int option;
-    do {
-        printf("\n=== MIC-1 SIMULATOR MENU ===\n");
-        printf("1. Show CPU state\n");
-        printf("2. Show registers\n");
-        printf("3. Show cache stats\n");
-        printf("4. Execute one cycle\n");
-        printf("5. Reset CPU\n");
-        printf("0. Exit\n");
-        printf("Choose option: ");
-        scanf("%d", &option);
-        switch (option) {
-            case 1: print_cpu_state(cpu); break;
-            case 2: print_registers(cpu); break;
-            case 3: 
-                printf("=== Data Cache ===\n");
-                printf("Data cache statistics available\n");
-                printf("=== Instruction Cache ===\n");
-                printf("Instruction cache statistics available\n");
-                break;
-            case 4: printf("Executing cycle...\n"); step_mic1(cpu); break;
-            case 5: printf("Resetting CPU...\n"); reset_mic1(cpu); break;
-            case 0: printf("Exiting simulator...\n"); break;
-            default: printf("Invalid option!\n");
-        }
-    } while (option != 0);
+void print_usage(const char* prog_name) {
+    printf("Uso: %s [arquivo_microcodigo] [arquivo_programa_opcional]\n", prog_name);
+    printf("Exemplo: %s data/microcode.txt programa.bin\n", prog_name);
 }
 
 int main(int argc, char* argv[]) {
-    print_banner();
     mic1_cpu cpu;
-    demo_component_initialization(&cpu);
-    demo_program_loading();
-    demo_step_execution(&cpu);
-    
+    const char* micro_file = "data/microcode.txt";
+    const char* prog_file = NULL;
+
+    printf("==========================================\n");
+    printf("      SIMULADOR MIC-1 (TANENBAUM)         \n");
+    printf("==========================================\n");
+
+    // 1. Tratamento de Argumentos
     if (argc > 1) {
-        printf("=== FILE LOADING ===\n");
-        printf("Trying to load: %s\n", argv[1]);
-        printf("(File loading to be implemented)\n");
-        printf("====================\n\n");
+        micro_file = argv[1];
     }
-    
-    // Check for CI/CD mode (non-interactive)
-    char* ci_mode = getenv("CI");
-    if (ci_mode != NULL) {
-        printf("\n=== CI/CD MODE ===\n");
-        printf("Running in non-interactive mode\n");
-        printf("All components initialized successfully!\n");
-        printf("Skipping interactive menu...\n");
-        printf("==================\n\n");
-        printf("MIC-1 simulator finished successfully!\n");
-        return 0;
+    if (argc > 2) {
+        prog_file = argv[2];
     }
+
+    // 2. Inicialização do Hardware
+    printf("[INIT] Inicializando componentes da CPU...\n");
+    init_mic1(&cpu);
+
+    // 3. Carga do Microcódigo (Firmware)
+    printf("[LOAD] Carregando microcodigo de '%s'...\n", micro_file);
+    int micro_ops = load_microprogram_file(&cpu, micro_file);
     
-    printf("Starting interactive mode...\n");
-    interactive_menu(&cpu);
-    printf("\nMIC-1 simulator finished successfully!\n");
+    if (micro_ops <= 0) {
+        printf("[ERRO] Falha ao carregar microcodigo ou arquivo vazio.\n");
+        printf("       Certifique-se de que o arquivo existe e contem linhas de 32 bits (0s e 1s).\n");
+        printf("       Voce pode criar um arquivo padrao em 'data/microcode.txt'.\n");
+        return 1;
+    }
+    printf("[OK]   %d microinstrucoes carregadas na memoria de controle.\n", micro_ops);
+
+    // 4. Carga do Programa (Memória Principal)
+    if (prog_file != NULL) {
+        printf("[LOAD] Carregando programa na memoria principal de '%s'...\n", prog_file);
+        // Nota: load_program_file atualmente espera um arquivo binário ou texto conforme implementado em memory.c
+        if (load_program_file(&cpu, prog_file) != 0) {
+             printf("[AVISO] Problema ao ler arquivo de programa. Continuando com memoria zerada.\n");
+        } else {
+             printf("[OK]   Programa carregado.\n");
+        }
+    } else {
+        printf("[INFO] Nenhum programa de usuario fornecido. Executando apenas microcodigo.\n");
+    }
+
+    // 5. Estado Inicial
+    printf("\n--- Estado Inicial do Datapath ---\n");
+    print_registers(&cpu);
+
+    // 6. Execução
+    printf("\n");
+    run_mic1_program(&cpu);
+
+    // 7. Estado Final
+    printf("\n--- Estado Final do Datapath ---\n");
+    print_registers(&cpu);
+
     return 0;
 }
