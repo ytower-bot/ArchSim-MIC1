@@ -140,7 +140,7 @@ help:
 # TUI targets
 TUI_DIR = tui
 TUI_BIN = $(TUI_DIR)/archsim-tui
-GO = $(HOME)/go/bin/go
+GO = go
 
 tui: $(OBJDIR)/libmic1.a
 	@echo "[GO] Building TUI..."
