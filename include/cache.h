@@ -1,8 +1,7 @@
 #ifndef CACHE_H
 #define CACHE_H
 
-// Forward declaration
-typedef struct memory memory;
+#include "memory.h"
 
 #define CACHE_SIZE 8
 #define LINE_WORDS 4
