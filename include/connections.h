@@ -8,7 +8,6 @@
 #include "control_unit.h"
 #include "cache.h"
 
-// Bus C structure
 typedef struct barrC {
     int data[16];
 } barrC;
@@ -16,8 +15,8 @@ typedef struct barrC {
 void run_decoderC(decoderC* d, shifter* s);
 void run_shifter(shifter* s, mbr* b, barrC* c);
 void run_amux(amux* a, mbr* b, latch* lA, alu* u);
-void run_mir(mir* m, mbr* mb, mar* ma, mmux* mmu, 
-             amux* amu, shifter* s, alu* al, 
+void run_mir(mir* m, mbr* mb, mar* ma, mmux* mmu,
+             amux* amu, shifter* s, alu* al,
              decoder* da, decoder* db, decoderC* dc);
 void connect_all_components(register_bank* rb, latch* la, latch* lb,
                            decoder* da, decoder* db, decoderC* dc,

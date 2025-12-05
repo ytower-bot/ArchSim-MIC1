@@ -230,38 +230,38 @@ if (assemble_file("program.asm", "program.bin") == 0) {
 ### **Erro: "Invalid opcode"**
 
 ```asm
-ADD 100  ; ❌ Errado: não existe ADD
-ADDD 100 ; ✅ Correto: ADDD (Add Direct)
+ADD 100  ;  Errado: não existe ADD
+ADDD 100 ;  Correto: ADDD (Add Direct)
 ```
 
 ### **Erro: "Missing operand"**
 
 ```asm
-LODD     ; ❌ Errado: falta endereço
-LODD 100 ; ✅ Correto
+LODD     ;  Errado: falta endereço
+LODD 100 ;  Correto
 ```
 
 ### **Erro: "Undefined label"**
 
 ```asm
-JUMP MISSING  ; ❌ Label MISSING não foi definida
+JUMP MISSING  ;  Label MISSING não foi definida
 
 START:  LODD 10
-        JUMP START  ; ✅ Correto: label definida
+        JUMP START  ;  Correto: label definida
 ```
 
 ### **Erro: "Duplicate label"**
 
 ```asm
 LOOP:   LODD 10
-LOOP:   ADDD 11  ; ❌ LOOP já existe
+LOOP:   ADDD 11  ;  LOOP já existe
 ```
 
 ### **Erro: "Out of range"**
 
 ```asm
-LOCO 256  ; ❌ 256 > 255 (operando 8-bit)
-LOCO 255  ; ✅ Máximo permitido
+LOCO 256  ;  256 > 255 (operando 8-bit)
+LOCO 255  ;  Máximo permitido
 ```
 
 ---

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -39,6 +40,75 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// File picker controls
+	if m.showFilePicker {
+		switch msg.String() {
+		case "esc", "l":
+			m.showFilePicker = false
+			return m, nil
+		case "up", "k":
+			if m.selectedFile > 0 {
+				m.selectedFile--
+			}
+			return m, nil
+		case "down", "j":
+			if m.selectedFile < len(m.asmFiles)-1 {
+				m.selectedFile++
+			}
+			return m, nil
+		case "enter":
+			if len(m.asmFiles) > 0 {
+				// Load the selected file
+				filename := m.asmFiles[m.selectedFile]
+				filepath := getAsmFilePath(filename)
+				m.loadFile(filepath)
+				m.showFilePicker = false
+			}
+			return m, nil
+		}
+		return m, nil
+	}
+
+	// Memory view specific controls
+	if m.showMemoryView {
+		switch msg.String() {
+		case "d":
+			m.showMemoryView = false
+			return m, nil
+		case "f":
+			switch m.memoryFormat {
+			case "hex":
+				m.memoryFormat = "decimal"
+			case "decimal":
+				m.memoryFormat = "ascii"
+			case "ascii":
+				m.memoryFormat = "hex"
+			}
+			return m, nil
+		}
+		return m, nil
+	}
+
+	// Results view specific controls
+	if m.showResultsView {
+		switch msg.String() {
+		case "t", "esc":
+			m.showResultsView = false
+			return m, nil
+		}
+		return m, nil
+	}
+
+	// Cache view specific controls
+	if m.showCacheView {
+		switch msg.String() {
+		case "c", "esc":
+			m.showCacheView = false
+			return m, nil
+		}
+		return m, nil
+	}
+
 	// Main controls
 	switch msg.String() {
 	case "s":
@@ -53,6 +123,20 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleReset(), nil
 	case "l":
 		return m.handleLoad(), nil
+	case "m":
+		return m.handleLoadMicrocode(), nil
+	case "v":
+		m.showMicrocode = !m.showMicrocode
+		return m, nil
+	case "d":
+		m.showMemoryView = !m.showMemoryView
+		return m, nil
+	case "t":
+		m.showResultsView = !m.showResultsView
+		return m, nil
+	case "c":
+		m.showCacheView = !m.showCacheView
+		return m, nil
 	}
 
 	return m, nil
@@ -60,29 +144,48 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m model) handleStep() model {
 	m.cpuWrapper.Step()
-	m.syncCPUState()
-	
-	// Update current line based on PC
+	// Sync CPU state - need to use pointer to update the model correctly
+	(&m).syncCPUState()
+
+	// Update current line based on PC (PC points to word address, not byte address)
 	pcVal := int(m.cpu.PC)
-	if pcVal/2 < len(m.sourceCode) {
-		m.currentLine = pcVal / 2
+	if pcVal < len(m.sourceCode) {
+		m.currentLine = pcVal
 	}
-	
+
 	return m
 }
 
 func (m model) handleReset() model {
 	m.cpuWrapper.Reset()
-	m.syncCPUState()
+	// Sync CPU state - need to use pointer to update the model correctly
+	(&m).syncCPUState()
+	m.microcodePath = GetMicrocodePath()
 	m.currentLine = 0
 	m.running = false
+	m.errorMsg = ""
 	return m
 }
 
 func (m model) handleLoad() model {
-	// Load default example if no file loaded
-	filename := "../examples/sum.asm"
-	m.loadFile(filename)
+	// Open file picker
+	m.asmFiles = findAsmFiles()
+	m.selectedFile = 0
+	m.showFilePicker = true
+	return m
+}
+
+func (m model) handleLoadMicrocode() model {
+	// Reload microcode using smart path resolution
+	filename := getDefaultMicrocodePath()
+	err := LoadMicrocode(filename)
+
+	if err != nil {
+		m.errorMsg = fmt.Sprintf("Failed to load microcode: %v", err)
+	} else {
+		m.microcodePath = GetMicrocodePath()
+		m.errorMsg = "Microcode reloaded successfully"
+	}
 	return m
 }
 

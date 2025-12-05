@@ -1,7 +1,6 @@
 #ifndef ALU_H
 #define ALU_H
 
-// ALU structure
 typedef struct alu {
     int input_a[16];
     int input_b[16];

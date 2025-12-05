@@ -63,6 +63,20 @@ The TUI is divided into two panels:
 - Terminal with ANSI support
 - C backend compiled (libmic1.a)
 
+## Technical Notes
+
+### Memory Management (ARM64 Compatibility)
+
+The TUI uses heap allocation for the MIC-1 CPU structure to ensure compatibility with ARM64 architectures (Apple Silicon). The CPU structure (~294 KB) is allocated dynamically via `malloc()` to avoid SIGBUS errors that occur with large static allocations in CGO on ARM64 macOS.
+
+**Implementation Details:**
+- CPU structure allocated on first `cgo_init_cpu()` call
+- Automatic cleanup on program exit
+- NULL safety checks in all CGO wrapper functions
+- Total size: 301,560 bytes (256 KB memory + 32 KB control memory + datapath)
+
+This approach ensures the TUI works seamlessly on both x86_64 and ARM64 platforms.
+
 ## Usage Example
 
 ```bash

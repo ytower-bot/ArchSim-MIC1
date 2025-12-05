@@ -3,37 +3,48 @@
 
 #include <stdint.h>
 
-// Opcode definitions for MIC-1 basic instruction set
-#define OP_LODD  0x00  // Load Direct:  AC <- Memory[addr]
-#define OP_STOD  0x01  // Store Direct: Memory[addr] <- AC
-#define OP_ADDD  0x02  // Add Direct:   AC <- AC + Memory[addr]
-#define OP_SUBD  0x03  // Sub Direct:   AC <- AC - Memory[addr]
-#define OP_LOCO  0x04  // Load Const:   AC <- constant
-#define OP_JUMP  0x05  // Jump:         PC <- addr
-#define OP_JZER  0x06  // Jump if Zero: if (AC == 0) PC <- addr
-#define OP_HALT  0x07  // Halt:         Stop execution
+#define OP_LODD  0x0
+#define OP_STOD  0x1
+#define OP_ADDD  0x2
+#define OP_SUBD  0x3
+#define OP_JPOS  0x4
+#define OP_JZER  0x5
+#define OP_JUMP  0x6
+#define OP_LOCO  0x7
+#define OP_LODL  0x8
+#define OP_STOL  0x9
+#define OP_ADDL  0xA
+#define OP_SUBL  0xB
+#define OP_JNEG  0xC
+#define OP_JNZE  0xD
+#define OP_CALL  0xE
+#define OP_SPECIAL 0xF
+#define OP_PSHI  0xF00
+#define OP_POPI  0xF20
+#define OP_PUSH  0xF40
+#define OP_POP   0xF60
+#define OP_RETN  0xF80
+#define OP_SWAP  0xFA0
+#define OP_INSP  0xFC0
+#define OP_DESP  0xFE0
 
-// Maximum sizes
 #define MAX_LABELS 256
 #define MAX_INSTRUCTIONS 4096
 #define MAX_LINE_LENGTH 256
 #define MAX_LABEL_LENGTH 64
 
-// Symbol table entry
 typedef struct {
     char label[MAX_LABEL_LENGTH];
     uint16_t address;
-} symbol_t;
+} __attribute__((aligned(8))) symbol_t;
 
-// Instruction structure
 typedef struct {
     uint8_t opcode;
     uint16_t operand;
     int has_label_ref;
     char label_ref[MAX_LABEL_LENGTH];
-} instruction_t;
+} __attribute__((aligned(8))) instruction_t;
 
-// Assembler state
 typedef struct {
     symbol_t symbols[MAX_LABELS];
     int symbol_count;
@@ -42,13 +53,10 @@ typedef struct {
     int current_address;
     int error_count;
     char error_msg[256];
-} assembler_t;
+} __attribute__((aligned(16))) assembler_t;
 
-// Public API
 int assemble_file(const char* input_file, const char* output_file);
 int assemble_string(const char* source, uint16_t* output, int* output_size);
-
-// Internal functions
 void init_assembler(assembler_t* as);
 int pass1(assembler_t* as, const char* source);
 int pass2(assembler_t* as, uint16_t* output);

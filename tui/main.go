@@ -1,3 +1,6 @@
+//go:build !testsp
+// +build !testsp
+
 package main
 
 import (
@@ -9,7 +12,7 @@ import (
 
 func main() {
 	var filename string
-	
+
 	// Parse command line arguments
 	if len(os.Args) > 1 {
 		filename = os.Args[1]
@@ -19,7 +22,7 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	
+
 	p := tea.NewProgram(
 		initialModel(filename),
 		tea.WithAltScreen(),

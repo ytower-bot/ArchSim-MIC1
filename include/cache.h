@@ -9,21 +9,18 @@
 #define LINE_BITS 3
 #define WORD_BITS 2
 
-// Cache line structure
 typedef struct cache_line {
     int valid;
     int tag[TAG_BITS];
     int data[LINE_WORDS][16];
 } cache_line;
 
-// Cache structure
 typedef struct cache {
     cache_line lines[CACHE_SIZE];
     int hits;
     int misses;
 } cache;
 
-// Address decomposition
 typedef struct address_fields {
     int tag[TAG_BITS];
     int line[LINE_BITS];

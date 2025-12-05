@@ -13,15 +13,16 @@ TESTDIR = tests
 
 # Target executables
 TARGET = mic1_simulator
+ASSEMBLER = mic1asm
 
 # Source files (excluding main.c for library build)
 ALL_SOURCES = $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/utils/*.c)
-EXCLUDED = $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c
+EXCLUDED = $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c $(SRCDIR)/mic1asm.c
 SOURCES = $(filter-out $(EXCLUDED), $(ALL_SOURCES))
 OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
-# Library objects (everything except main.c)
-LIB_SOURCES = $(filter-out $(SRCDIR)/main.c, $(SOURCES))
+# Library objects (everything except main.c and mic1asm.c)
+LIB_SOURCES = $(filter-out $(SRCDIR)/main.c $(SRCDIR)/mic1asm.c, $(SOURCES))
 LIB_OBJECTS = $(LIB_SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 # Test files
@@ -32,8 +33,8 @@ TEST_BINS = $(TEST_SOURCES:$(TESTDIR)/%.c=$(TESTDIR)/%)
 HEADERS = $(wildcard $(INCDIR)/*.h)
 
 # Default target
-all: $(TARGET)
-	@echo "[OK] MIC-1 Simulator compiled successfully"
+all: $(TARGET) $(ASSEMBLER)
+	@echo "[OK] MIC-1 Simulator and Assembler compiled successfully"
 
 # Create object directory if it doesn't exist
 $(OBJDIR):
@@ -49,6 +50,11 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS) | $(OBJDIR)
 $(TARGET): $(OBJECTS)
 	@echo "[LD] $@"
 	@$(CC) $(OBJECTS) -o $(TARGET)
+
+# Link assembler executable
+$(ASSEMBLER): $(OBJDIR)/mic1asm.o $(LIB_OBJECTS)
+	@echo "[LD] $@"
+	@$(CC) $(OBJDIR)/mic1asm.o $(LIB_OBJECTS) -o $(ASSEMBLER)
 
 # Create static library for CGO
 $(OBJDIR)/libmic1.a: $(LIB_OBJECTS)
@@ -92,7 +98,7 @@ clean:
 
 # Clean everything
 fclean: clean tui-clean
-	@rm -f $(TARGET)
+	@rm -f $(TARGET) $(ASSEMBLER)
 	@echo "[CLEAN] All build artifacts removed"
 
 # Rebuild everything
@@ -121,10 +127,11 @@ help:
 	@echo "MIC-1 Simulator Build System"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  all          - Build the simulator (default)"
+	@echo "  all          - Build simulator + assembler (default)"
 	@echo "  debug        - Build with debug symbols"
 	@echo "  test         - Build and run all tests"
 	@echo "  run          - Build and run simulator"
+	@echo "  asm          - Assemble examples (examples/*.asm -> examples/*.bin)"
 	@echo "  tui          - Build TUI"
 	@echo "  tui-run      - Build and run TUI"
 	@echo "  tui-clean    - Remove TUI binary"
@@ -136,6 +143,21 @@ help:
 	@echo "  docker-test  - Build and test in Docker"
 	@echo "  docker-shell - Start Docker shell"
 	@echo "  help         - Show this help"
+
+# Assemble all example programs
+asm: $(ASSEMBLER)
+	@echo "════════════════════════════════════════"
+	@echo "  Assembling Example Programs"
+	@echo "════════════════════════════════════════"
+	@for file in examples/*.asm; do \
+		if [ -f "$$file" ]; then \
+			echo ""; \
+			./$(ASSEMBLER) "$$file"; \
+		fi \
+	done
+	@echo "════════════════════════════════════════"
+	@echo "✓ All examples assembled!"
+	@echo "════════════════════════════════════════"
 
 # TUI targets
 TUI_DIR = tui
@@ -150,9 +172,13 @@ tui: $(OBJDIR)/libmic1.a
 tui-run: tui
 	@cd $(TUI_DIR) && ./archsim-tui
 
+tui-testsp: $(OBJDIR)/libmic1.a
+	@echo "[GO] Running TUI SP test (tagged)"
+	@cd $(TUI_DIR) && $(GO) run -tags testsp .
+
 tui-clean:
 	@rm -f $(TUI_BIN)
 	@echo "[CLEAN] TUI binary removed"
 
 # Phony targets
-.PHONY: all debug test run clean fclean re install docker-build docker-test docker-shell help tui tui-run tui-clean
+.PHONY: all debug test run asm clean fclean re install docker-build docker-test docker-shell help tui tui-run tui-clean

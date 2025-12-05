@@ -1,15 +1,11 @@
 #ifndef DATAPATH_H
 #define DATAPATH_H
 
-// Individual register structure
 typedef struct mic1_register {
     int data[16];
 } mic1_register;
 
-// Register bank with 16 registers
-// Acho que fica mais fácil de acessar cada registrador assim
 typedef struct register_bank {
-    //mic1_register registers[16];
 
     mic1_register PC;
     mic1_register AC;
@@ -29,21 +25,18 @@ typedef struct register_bank {
     mic1_register F;
 } register_bank;
 
-// Latch structure
 typedef struct latch {
     int data[16];
 } latch;
 
-// Source register decoder
 typedef struct decoder {
     register_bank *rb;
-    //mic1_register* registers[16];
+
     int control[4];
 } decoder;
 
-// Destination register decoder
 typedef struct decoderC {
-    //mic1_register* registers[16];
+
     register_bank *rb;
     int control_c[4];
     int control_enc;

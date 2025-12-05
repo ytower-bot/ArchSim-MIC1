@@ -13,7 +13,6 @@
 #include "cache.h"
 #include "connections.h"
 
-// Main MIC-1 CPU structure
 typedef struct mic1_cpu {
     register_bank reg_bank;
     latch latch_a;
@@ -26,8 +25,7 @@ typedef struct mic1_cpu {
     mar mar;
     mbr mbr;
     memory main_memory;
-    cache data_cache;
-    cache instruction_cache;
+    cache unified_cache;
     mir mir;
     mpc mpc;
     mmux mmux;
@@ -57,25 +55,5 @@ int is_cpu_halted(mic1_cpu* cpu);
 #define MIC1_WORD_SIZE 16
 #define MIC1_ADDRESS_SIZE 12
 #define MIC1_MICROADDR_SIZE 8
-
-// Retirei a parte que define uma constante para cada registrador
-/*
-#define REG_PC    0
-#define REG_AC    1
-#define REG_SP    2
-#define REG_IR    3
-#define REG_TIR   4
-#define REG_0     5
-#define REG_1     6
-#define REG_NEG1  7
-#define REG_AMASK 8
-#define REG_SMASK 9
-#define REG_A     10
-#define REG_B     11
-#define REG_C     12
-#define REG_D     13
-#define REG_E     14
-#define REG_F     15
-*/
 
 #endif

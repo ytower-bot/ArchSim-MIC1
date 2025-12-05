@@ -6,126 +6,247 @@ package main
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include "../include/mic1.h"
 #include "../include/assembler.h"
+#include "../include/control_unit.h"
 
-// Global CPU instance
-static mic1_cpu g_cpu;
+static mic1_cpu* g_cpu = NULL;
+static char g_microcode_path[512] = "";
 
-// Initialize CPU
+int try_load_microprogram(control_memory* cm, const char* filename) {
+    if (filename == NULL) {
+        fprintf(stderr, "ERROR: No microcode path provided\n");
+        return -1;
+    }
+
+    int result = load_microprogram(cm, filename);
+    if (result >= 0) {
+        strncpy(g_microcode_path, filename, sizeof(g_microcode_path) - 1);
+        fprintf(stderr, "INFO: Loaded %d microinstructions from %s\n", result, filename);
+    } else {
+        fprintf(stderr, "ERROR: Failed to load microprogram from %s\n", filename);
+    }
+    return result;
+}
+
 void cgo_init_cpu() {
-    init_mic1(&g_cpu);
+    if (g_cpu == NULL) {
+        g_cpu = (mic1_cpu*)malloc(sizeof(mic1_cpu));
+        if (g_cpu == NULL) {
+            fprintf(stderr, "FATAL: Failed to allocate mic1_cpu (%zu bytes)\n", sizeof(mic1_cpu));
+            return;
+        }
+        memset(g_cpu, 0, sizeof(mic1_cpu));
+    }
+    init_mic1(g_cpu);
 }
 
-// Reset CPU
 void cgo_reset_cpu() {
-    reset_mic1(&g_cpu);
+    if (g_cpu == NULL) {
+        fprintf(stderr, "ERROR: CPU not initialized\n");
+        return;
+    }
+    reset_mic1(g_cpu);
+
+    if (strlen(g_microcode_path) > 0) {
+        int result = load_microprogram(&g_cpu->ctrl_mem, g_microcode_path);
+        if (result < 0) {
+            fprintf(stderr, "Warning: Failed to reload from %s\n", g_microcode_path);
+        }
+    }
 }
 
-// Step one cycle
+int cgo_load_microcode(const char* path) {
+    if (g_cpu == NULL) {
+        fprintf(stderr, "ERROR: CPU not initialized\n");
+        return -1;
+    }
+    int result = load_microprogram(&g_cpu->ctrl_mem, path);
+    if (result >= 0) {
+        strncpy(g_microcode_path, path, sizeof(g_microcode_path) - 1);
+        fprintf(stderr, "INFO: Loaded %d microinstructions from %s\n", result, path);
+    } else {
+        fprintf(stderr, "ERROR: Failed to load microprogram from %s\n", path);
+    }
+    return result;
+}
+
+const char* cgo_get_microcode_path() {
+    return g_microcode_path;
+}
+
+void cgo_cleanup_cpu() {
+    if (g_cpu != NULL) {
+        free(g_cpu);
+        g_cpu = NULL;
+    }
+}
+
 void cgo_step_cpu() {
-    step_mic1(&g_cpu);
+    if (g_cpu == NULL) {
+        fprintf(stderr, "ERROR: CPU not initialized\n");
+        return;
+    }
+    step_mic1(g_cpu);
 }
 
-// Get register value
 uint16_t cgo_get_register(int index) {
+    if (g_cpu == NULL) return 0;
     if (index < 0 || index >= 16) return 0;
-    
+
     switch(index) {
-        case 0: return bits_to_int(g_cpu.reg_bank.PC.data, 16);
-        case 1: return bits_to_int(g_cpu.reg_bank.AC.data, 16);
-        case 2: return bits_to_int(g_cpu.reg_bank.SP.data, 16);
-        case 3: return bits_to_int(g_cpu.reg_bank.IR.data, 16);
-        case 4: return bits_to_int(g_cpu.reg_bank.TIR.data, 16);
+        case 0: return bits_to_int(g_cpu->reg_bank.PC.data, 16);
+        case 1: return bits_to_int(g_cpu->reg_bank.AC.data, 16);
+        case 2: return bits_to_int(g_cpu->reg_bank.IR.data, 16);
+        case 3: return bits_to_int(g_cpu->reg_bank.TIR.data, 16);
+        case 4: return bits_to_int(g_cpu->reg_bank.SP.data, 16);
         default: return 0;
     }
 }
 
-// Get CPU state
 int cgo_get_cycles() {
-    return g_cpu.cycle_count;
+    if (g_cpu == NULL) return 0;
+    return g_cpu->cycle_count;
 }
 
 int cgo_get_clock() {
-    return g_cpu.clock;
+    if (g_cpu == NULL) return 0;
+    return g_cpu->clock;
 }
 
 int cgo_is_running() {
-    return g_cpu.running;
+    if (g_cpu == NULL) return 0;
+    return g_cpu->running;
 }
 
-// Get flags
 int cgo_get_flag_n() {
-    return g_cpu.alu.flag_n;
+    if (g_cpu == NULL) return 0;
+    return g_cpu->alu.flag_n;
 }
 
 int cgo_get_flag_z() {
-    return g_cpu.alu.flag_z;
+    if (g_cpu == NULL) return 0;
+    return g_cpu->alu.flag_z;
 }
 
-// Get MPC
 uint8_t cgo_get_mpc() {
-    return bits_to_int(g_cpu.mpc.address, 8);
+    if (g_cpu == NULL) return 0;
+    return bits_to_int(g_cpu->mpc.address, 8);
 }
 
-// Memory operations
 uint16_t cgo_read_memory(uint16_t address) {
+    if (g_cpu == NULL) return 0;
     if (address >= 4096) return 0;
-    return bits_to_int(g_cpu.main_memory.data[address], 16);
+    return bits_to_int(g_cpu->main_memory.data[address], 16);
 }
 
 void cgo_write_memory(uint16_t address, uint16_t value) {
+    if (g_cpu == NULL) return;
     if (address >= 4096) return;
-    int_to_bits(value, g_cpu.main_memory.data[address], 16);
+    int_to_bits(value, g_cpu->main_memory.data[address], 16);
 }
 
-// Cache stats
-int cgo_get_data_cache_hits() {
-    return g_cpu.data_cache.hits;
+int cgo_get_cache_hits() {
+    if (g_cpu == NULL) return 0;
+    return g_cpu->unified_cache.hits;
 }
 
-int cgo_get_data_cache_misses() {
-    return g_cpu.data_cache.misses;
+int cgo_get_cache_misses() {
+    if (g_cpu == NULL) return 0;
+    return g_cpu->unified_cache.misses;
 }
 
-int cgo_get_inst_cache_hits() {
-    return g_cpu.instruction_cache.hits;
+int cgo_get_cache_line_valid(int line_index) {
+    if (g_cpu == NULL) return 0;
+    if (line_index < 0 || line_index >= 8) return 0;
+    return g_cpu->unified_cache.lines[line_index].valid;
 }
 
-int cgo_get_inst_cache_misses() {
-    return g_cpu.instruction_cache.misses;
+int cgo_get_cache_line_tag(int line_index) {
+    if (g_cpu == NULL) return 0;
+    if (line_index < 0 || line_index >= 8) return 0;
+    return bits_to_int(g_cpu->unified_cache.lines[line_index].tag, 7);
 }
 
-// Assembler wrapper
+uint16_t cgo_get_cache_line_word(int line_index, int word_offset) {
+    if (g_cpu == NULL) return 0;
+    if (line_index < 0 || line_index >= 8) return 0;
+    if (word_offset < 0 || word_offset >= 4) return 0;
+    return bits_to_int(g_cpu->unified_cache.lines[line_index].data[word_offset], 16);
+}
+
 int cgo_assemble_file(const char* input_file) {
-    uint16_t output[MAX_INSTRUCTIONS];
-    int size = 0;
-    
-    // Read file
+    if (g_cpu == NULL) {
+        fprintf(stderr, "ERROR: CPU not initialized\n");
+        return -1;
+    }
+
+
+    uint16_t* output = (uint16_t*)malloc(MAX_INSTRUCTIONS * sizeof(uint16_t));
+    if (!output) {
+        fprintf(stderr, "ERROR: Failed to allocate output buffer\n");
+        return -1;
+    }
+    memset(output, 0, MAX_INSTRUCTIONS * sizeof(uint16_t));
+
+
+    int* size_ptr = (int*)malloc(sizeof(int));
+    if (!size_ptr) {
+        fprintf(stderr, "ERROR: Failed to allocate size variable\n");
+        free(output);
+        return -1;
+    }
+    *size_ptr = 0;
+
     FILE* fp = fopen(input_file, "r");
-    if (!fp) return -1;
-    
+    if (!fp) {
+        fprintf(stderr, "ERROR: Cannot open file %s\n", input_file);
+        free(size_ptr);
+        free(output);
+        return -1;
+    }
+
+
     fseek(fp, 0, SEEK_END);
     long fsize = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    
-    char* source = malloc(fsize + 1);
-    fread(source, 1, fsize, fp);
-    fclose(fp);
-    source[fsize] = 0;
-    
-    // Assemble
-    int result = assemble_string(source, output, &size);
-    free(source);
-    
-    if (result != 0) return -1;
-    
-    // Load into memory
-    for (int i = 0; i < size; i++) {
-        cgo_write_memory(i * 2, output[i]);
+
+
+    char* source = (char*)malloc(fsize + 1);
+    if (!source) {
+        fprintf(stderr, "ERROR: Failed to allocate source buffer\n");
+        fclose(fp);
+        free(size_ptr);
+        free(output);
+        return -1;
     }
-    
-    return size;
+
+    size_t read_size = fread(source, 1, fsize, fp);
+    fclose(fp);
+    source[read_size] = 0;
+
+
+    int result = assemble_string(source, output, size_ptr);
+    free(source);
+
+
+    if (result != 0) {
+        free(size_ptr);
+        free(output);
+        return -1;
+    }
+
+    for (int i = 0; i < *size_ptr; i++) {
+        cgo_write_memory(i, output[i]);
+    }
+
+
+    int final_size = *size_ptr;
+    free(size_ptr);
+    free(output);
+    return final_size;
 }
 */
 import "C"
@@ -134,121 +255,132 @@ import (
 	"unsafe"
 )
 
-// CPUWrapper wraps the C MIC-1 CPU
 type CPUWrapper struct {
 	initialized bool
 }
 
-// NewCPUWrapper creates and initializes a new CPU wrapper
 func NewCPUWrapper() *CPUWrapper {
 	C.cgo_init_cpu()
 	return &CPUWrapper{initialized: true}
 }
 
-// Reset resets the CPU state
 func (cpu *CPUWrapper) Reset() {
 	C.cgo_reset_cpu()
 }
 
-// Step executes one CPU cycle
 func (cpu *CPUWrapper) Step() {
 	C.cgo_step_cpu()
 }
 
-// GetPC returns the Program Counter value
 func (cpu *CPUWrapper) GetPC() uint16 {
 	return uint16(C.cgo_get_register(0))
 }
 
-// GetAC returns the Accumulator value
 func (cpu *CPUWrapper) GetAC() uint16 {
 	return uint16(C.cgo_get_register(1))
 }
 
-// GetSP returns the Stack Pointer value
-func (cpu *CPUWrapper) GetSP() uint16 {
+func (cpu *CPUWrapper) GetIR() uint16 {
 	return uint16(C.cgo_get_register(2))
 }
 
-// GetIR returns the Instruction Register value
-func (cpu *CPUWrapper) GetIR() uint16 {
+func (cpu *CPUWrapper) GetTIR() uint16 {
 	return uint16(C.cgo_get_register(3))
 }
 
-// GetTIR returns the Temporary Instruction Register value
-func (cpu *CPUWrapper) GetTIR() uint16 {
+func (cpu *CPUWrapper) GetSP() uint16 {
 	return uint16(C.cgo_get_register(4))
 }
 
-// GetCycles returns the cycle count
 func (cpu *CPUWrapper) GetCycles() int {
 	return int(C.cgo_get_cycles())
 }
 
-// GetClock returns the clock count
 func (cpu *CPUWrapper) GetClock() int {
 	return int(C.cgo_get_clock())
 }
 
-// IsRunning returns whether CPU is running
 func (cpu *CPUWrapper) IsRunning() bool {
 	return int(C.cgo_is_running()) != 0
 }
 
-// GetFlagN returns the N flag
 func (cpu *CPUWrapper) GetFlagN() bool {
 	return int(C.cgo_get_flag_n()) != 0
 }
 
-// GetFlagZ returns the Z flag
 func (cpu *CPUWrapper) GetFlagZ() bool {
 	return int(C.cgo_get_flag_z()) != 0
 }
 
-// GetMPC returns the Microprogram Counter value
 func (cpu *CPUWrapper) GetMPC() uint8 {
 	return uint8(C.cgo_get_mpc())
 }
 
-// ReadMemory reads a value from memory
 func (cpu *CPUWrapper) ReadMemory(address uint16) uint16 {
 	return uint16(C.cgo_read_memory(C.uint16_t(address)))
 }
 
-// WriteMemory writes a value to memory
 func (cpu *CPUWrapper) WriteMemory(address uint16, value uint16) {
 	C.cgo_write_memory(C.uint16_t(address), C.uint16_t(value))
 }
 
-// GetDataCacheHits returns data cache hits
-func (cpu *CPUWrapper) GetDataCacheHits() int {
-	return int(C.cgo_get_data_cache_hits())
+func (cpu *CPUWrapper) GetCacheHits() int {
+	return int(C.cgo_get_cache_hits())
 }
 
-// GetDataCacheMisses returns data cache misses
-func (cpu *CPUWrapper) GetDataCacheMisses() int {
-	return int(C.cgo_get_data_cache_misses())
+func (cpu *CPUWrapper) GetCacheMisses() int {
+	return int(C.cgo_get_cache_misses())
 }
 
-// GetInstCacheHits returns instruction cache hits
-func (cpu *CPUWrapper) GetInstCacheHits() int {
-	return int(C.cgo_get_inst_cache_hits())
+type CacheLineInfo struct {
+	Index int
+	Valid bool
+	Tag   uint8
+	Data  [4]uint16
 }
 
-// GetInstCacheMisses returns instruction cache misses
-func (cpu *CPUWrapper) GetInstCacheMisses() int {
-	return int(C.cgo_get_inst_cache_misses())
+func (cpu *CPUWrapper) GetCacheLineInfo(lineIndex int) CacheLineInfo {
+	return CacheLineInfo{
+		Index: lineIndex,
+		Valid: int(C.cgo_get_cache_line_valid(C.int(lineIndex))) != 0,
+		Tag:   uint8(C.cgo_get_cache_line_tag(C.int(lineIndex))),
+		Data: [4]uint16{
+			uint16(C.cgo_get_cache_line_word(C.int(lineIndex), 0)),
+			uint16(C.cgo_get_cache_line_word(C.int(lineIndex), 1)),
+			uint16(C.cgo_get_cache_line_word(C.int(lineIndex), 2)),
+			uint16(C.cgo_get_cache_line_word(C.int(lineIndex), 3)),
+		},
+	}
 }
 
-// AssembleFile assembles an assembly file and loads it into memory
 func (cpu *CPUWrapper) AssembleFile(filename string) error {
 	cFilename := C.CString(filename)
 	defer C.free(unsafe.Pointer(cFilename))
-	
+
 	result := C.cgo_assemble_file(cFilename)
 	if result < 0 {
 		return fmt.Errorf("failed to assemble file: %s", filename)
 	}
-	
+
 	return nil
+}
+
+func LoadMicrocode(filename string) error {
+	cFilename := C.CString(filename)
+	defer C.free(unsafe.Pointer(cFilename))
+
+	result := int(C.cgo_load_microcode(cFilename))
+	if result < 0 {
+		return fmt.Errorf("failed to load microcode: %s", filename)
+	}
+
+	return nil
+}
+
+func GetMicrocodePath() string {
+	return C.GoString(C.cgo_get_microcode_path())
+}
+
+func CleanupCPU() {
+	C.cgo_cleanup_cpu()
 }

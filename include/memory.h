@@ -6,13 +6,13 @@
 
 #define MEMORY_SIZE 4096
 
-// Memory Address Register
+struct cache;
+
 typedef struct mar {
     int control_mar;
     int address[12];
 } mar;
 
-// Memory Buffer Register
 typedef struct mbr {
     int control_rd;
     int control_wr;
@@ -20,16 +20,15 @@ typedef struct mbr {
     int data[16];
 } mbr;
 
-// Main Memory
 typedef struct memory {
     int data[MEMORY_SIZE][16];
 } memory;
 
 void run_mar(mar* a, latch* lB);
 void init_mar(mar* a);
-void run_mbr(mar* a, mbr* b, memory* mem, shifter* s);
-void m_read(mar* a, mbr* b, memory* mem);
-void m_write(mar* a, mbr* b, memory* mem);
+void run_mbr(mar* a, mbr* b, memory* mem, shifter* s, struct cache* cache);
+void m_read(mar* a, mbr* b, memory* mem, struct cache* c);
+void m_write(mar* a, mbr* b, memory* mem, struct cache* c);
 void init_mbr(mbr* b);
 void init_memory(memory* mem);
 void load_program(memory* mem, const char* filename);

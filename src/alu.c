@@ -1,5 +1,7 @@
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "../include/alu.h"
 
 void init_alu(alu* a) {
@@ -44,15 +46,15 @@ void update_flags(alu* a) {
 
 void alu_add(alu* a) {
     int val_a = 0, val_b = 0;
-    
+
     for (int i = 0; i < 16; i++) {
         val_a = (val_a << 1) | a->input_a[i];
         val_b = (val_b << 1) | a->input_b[i];
     }
-    
+
     int result = (int16_t)val_a + (int16_t)val_b;
     result = result & 0xFFFF;
-    
+
     for (int i = 0; i < 16; i++) {
         a->output[15 - i] = (result >> i) & 1;
     }
@@ -76,7 +78,7 @@ void alu_not_a(alu* a) {
 
 void run_alu(alu* a) {
     int ctrl = (a->control[1] << 1) | a->control[0];
-    
+
     switch (ctrl) {
         case 0:
             alu_add(a);
@@ -91,6 +93,6 @@ void run_alu(alu* a) {
             alu_not_a(a);
             break;
     }
-    
+
     update_flags(a);
 }

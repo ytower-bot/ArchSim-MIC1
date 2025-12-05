@@ -61,7 +61,7 @@ void interactive_menu(mic1_cpu* cpu) {
         switch (option) {
             case 1: print_cpu_state(cpu); break;
             case 2: print_registers(cpu); break;
-            case 3: 
+            case 3:
                 printf("=== Data Cache ===\n");
                 printf("Data cache statistics available\n");
                 printf("=== Instruction Cache ===\n");
@@ -81,15 +81,14 @@ int main(int argc, char* argv[]) {
     demo_component_initialization(&cpu);
     demo_program_loading();
     demo_step_execution(&cpu);
-    
+
     if (argc > 1) {
         printf("=== FILE LOADING ===\n");
         printf("Trying to load: %s\n", argv[1]);
         printf("(File loading to be implemented)\n");
         printf("====================\n\n");
     }
-    
-    // Check for CI/CD mode (non-interactive)
+
     char* ci_mode = getenv("CI");
     if (ci_mode != NULL) {
         printf("\n=== CI/CD MODE ===\n");
@@ -100,7 +99,7 @@ int main(int argc, char* argv[]) {
         printf("MIC-1 simulator finished successfully!\n");
         return 0;
     }
-    
+
     printf("Starting interactive mode...\n");
     interactive_menu(&cpu);
     printf("\nMIC-1 simulator finished successfully!\n");
