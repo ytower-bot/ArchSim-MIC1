@@ -5,11 +5,12 @@ Simulador educacional da microarquitetura MIC-1 baseado na especificação de An
 ## Características
 
 - Implementação completa da via de dados MIC-1
-- Unidade de controle microprogramada
-- Sistema de memória com cache unificada
+- Unidade de controle microprogramada com 256 microinstruções
+- Sistema de memória com cache unificada (8 linhas × 4 palavras)
 - Montador assembly para instruções IJVM
-- Interface TUI (Terminal User Interface) interativa
+- Interface TUI (Terminal User Interface) interativa em Go
 - Suporte para todas as 23 instruções IJVM
+- Integração C/Go via CGO
 
 ## Compilação
 
@@ -108,10 +109,32 @@ Controles:
 
 ```
 ArchSim-MIC1/
-├── src/          # Código fonte C
-├── include/      # Headers
-├── data/         # Microcódigo
-├── examples/     # Programas exemplo
+├── src/          # Código fonte C (simulador core)
+│   ├── mic1.c           # CPU principal e ciclo de execução
+│   ├── datapath.c       # Via de dados (decoders, latches)
+│   ├── control_unit.c   # Unidade de controle (MIR, MPC, MMUX)
+│   ├── alu.c            # Unidade lógica aritmética
+│   ├── shifter.c        # Deslocador
+│   ├── memory.c         # Memória principal e cache
+│   ├── assembler.c      # Montador IJVM
+│   └── utils/           # Utilitários (conversões)
+├── include/      # Headers C
+├── data/         # Microcódigo (basic_microcode.txt)
+├── examples/     # Programas exemplo em assembly
 ├── docs/         # Documentação técnica
-└── tui/          # Interface TUI (Go)
+└── tui/          # Interface TUI (Go + CGO)
+    ├── cgo_wrapper.go   # Ponte C/Go
+    ├── model.go         # Modelo de dados
+    ├── view.go          # Renderização
+    └── update.go        # Lógica de atualização
 ```
+
+## Arquitetura Técnica
+
+O projeto utiliza uma arquitetura híbrida C/Go:
+
+1. **Backend C**: Implementa toda a lógica do simulador MIC-1
+2. **CGO Wrapper**: Interface entre C e Go (`cgo_wrapper.go`)
+3. **Frontend Go**: Interface TUI usando `bubbletea` e `lipgloss`
+
+A comunicação ocorre através de funções C exportadas via CGO, permitindo que o Go chame funções C e acesse estruturas de dados do simulador.
