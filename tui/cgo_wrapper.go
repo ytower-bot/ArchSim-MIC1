@@ -1,5 +1,35 @@
 package main
 
+/*
+#cgo CFLAGS: -I../include
+#cgo LDFLAGS: -L../obj -lmic1 -lm
+#include <stdint.h>
+#include "../include/mic1.h"
+#include "../include/assembler.h"
+#include "../include/utils/conversions.h"
+
+extern void cgo_init_cpu(void);
+extern void cgo_reset_cpu(void);
+extern void cgo_step_cpu(void);
+extern uint16_t cgo_get_register(int index);
+extern int cgo_get_cycles(void);
+extern int cgo_get_clock(void);
+extern int cgo_is_running(void);
+extern int cgo_get_flag_n(void);
+extern int cgo_get_flag_z(void);
+extern uint8_t cgo_get_mpc(void);
+extern uint16_t cgo_read_memory(uint16_t address);
+extern void cgo_write_memory(uint16_t address, uint16_t value);
+extern int cgo_get_cache_hits(void);
+extern int cgo_get_cache_misses(void);
+extern int cgo_get_cache_line_valid(int line_index);
+extern uint8_t cgo_get_cache_line_tag(int line_index);
+extern uint16_t cgo_get_cache_line_word(int line_index, int word_index);
+extern int cgo_assemble_file(const char* filename);
+extern int cgo_load_microcode(const char* filename);
+extern const char* cgo_get_microcode_path(void);
+extern void cgo_cleanup_cpu(void);
+*/
 import "C"
 import (
 	"fmt"
