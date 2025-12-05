@@ -211,6 +211,8 @@ func (m *model) loadFile(filename string) {
 		return
 	}
 
+	m.cpuWrapper.Reset()
+
 	m.loadedFile = filename
 	m.currentLine = 0
 	m.errorMsg = ""

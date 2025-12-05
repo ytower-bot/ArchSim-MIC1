@@ -53,7 +53,21 @@ void cgo_reset_cpu() {
         fprintf(stderr, "ERROR: CPU not initialized\n");
         return;
     }
+
+    memory saved_memory;
+    for (int i = 0; i < 4096; i++) {
+        for (int j = 0; j < 16; j++) {
+            saved_memory.data[i][j] = g_cpu->main_memory.data[i][j];
+        }
+    }
+
     reset_mic1(g_cpu);
+
+    for (int i = 0; i < 4096; i++) {
+        for (int j = 0; j < 16; j++) {
+            g_cpu->main_memory.data[i][j] = saved_memory.data[i][j];
+        }
+    }
 
     if (g_cpu->decoder_c.rb == NULL) {
         g_cpu->decoder_c.rb = &g_cpu->reg_bank;
