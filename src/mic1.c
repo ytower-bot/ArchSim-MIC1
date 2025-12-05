@@ -74,6 +74,10 @@ void execute_datapath(mic1_cpu* cpu) {
 
     mir* m = &cpu->mir;
 
+    if (!cpu->decoder_c.rb) {
+        cpu->decoder_c.rb = &cpu->reg_bank;
+    }
+
     for (int i = 0; i < 4; i++) {
         cpu->decoder_a.control[i] = m->a[i];
         cpu->decoder_b.control[i] = m->b[i];

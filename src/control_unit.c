@@ -165,7 +165,6 @@ void run_mpc(mpc* p, mir* m, control_memory* cm) {
     int index = bits_to_int(p->address, 8);
 
     if (index < 0 || index >= MICROPROGRAM_SIZE) {
-
         for (int i = 0; i < 32; i++) {
             m->data[i] = 0;
         }
@@ -225,20 +224,16 @@ void run_mmux(mmux* m, mpc* p, mir* mir, mbr* mb) {
     }
 
         if (should_branch(m)) {
-
             int addr_value = bits_to_int(mir->addr, 8);
-
             int cond = (m->control_cond[1] << 1) | m->control_cond[0];
 
             if (cond == COND_ALWAYS && addr_value == 0xFF && mb) {
-
                 int opcode = 0;
                 for (int i = 0; i < 4; i++) {
                     opcode |= (mb->data[12 + i] << (3 - i));
                 }
 
                 int base = 0x14;
-
                 int target = base + (opcode << 2);
 
                 if (opcode >= 0x4) target += 4;
@@ -250,15 +245,13 @@ void run_mmux(mmux* m, mpc* p, mir* mir, mbr* mb) {
 
                 int_to_bits(target, p->address, 8);
             } else {
-
                 for (int i = 0; i < 8; i++) {
                     p->address[i] = mir->addr[i];
                 }
             }
         } else {
-
-        increment_mpc(p);
-    }
+            increment_mpc(p);
+        }
 }
 
 void init_amux(amux* a) {
@@ -307,7 +300,6 @@ int load_microprogram(control_memory* cm, const char* filename) {
     int instruction_count = 0;
 
     while (fgets(line, sizeof(line), file) && instruction_count < MICROPROGRAM_SIZE) {
-
         if (line[0] == '#' || line[0] == ';' || line[0] == '\n' || line[0] == '\r') {
             continue;
         }
@@ -321,7 +313,6 @@ int load_microprogram(control_memory* cm, const char* filename) {
                 cm->microinstructions[instruction_count][i] = 1;
                 valid_bits++;
             } else if (line[i] != ' ' && line[i] != '\t') {
-
                 fprintf(stderr, "Warning: Invalid character '%c' at instruction %d, bit %d\n",
                         line[i], instruction_count, i);
             }

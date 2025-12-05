@@ -89,6 +89,11 @@ void run_decoderC(decoderC* d, shifter* s) {
     if (!d || !s) return;
 
     if (d->control_enc == 0) return;
+    
+    if (!d->rb) {
+        printf("Erro: decoderC->rb é NULL!\n");
+        return;
+    }
 
     int reg_index = control_to_index(d->control_c);
 
