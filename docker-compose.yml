@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  archsim:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: archsim-mic1:latest
+    container_name: archsim-mic1
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./examples:/app/examples:ro
+      - ./data:/app/data:ro
+    environment:
+      - TERM=xterm-256color
+

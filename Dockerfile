@@ -1,48 +1,34 @@
-FROM ubuntu:22.04
+FROM golang:1.23-bookworm
 
-# Evitar prompts interativos durante instalação
 ENV DEBIAN_FRONTEND=noninteractive
+ENV GOTOOLCHAIN=auto
 
-# Instalar dependências
 RUN apt-get update && apt-get install -y \
     gcc \
     make \
-    vim \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Criar diretório de trabalho
 WORKDIR /app
 
-# Copiar arquivos do projeto
 COPY include/ ./include/
 COPY src/ ./src/
-COPY tests/ ./tests/
 COPY data/ ./data/
 COPY examples/ ./examples/
+COPY tui/ ./tui/
 COPY Makefile ./
-COPY README.md ./
 
-# Compilar projeto e testes
-RUN make clean && make all && make test
+# Build C binaries and static lib
+RUN make clean && make all && make obj/libmic1.a && make asm
 
-# Criar script de boas-vindas
-RUN echo '#!/bin/bash\n\
-echo ""\n\
-echo "==================================="\n\
-echo "  ArchSim-MIC1 Simulator"\n\
-echo "==================================="\n\
-echo ""\n\
-echo "Available commands:"\n\
-echo "  make all             - Build simulator"\n\
-echo "  make test            - Run all tests"\n\
-echo "  ./mic1_simulator     - Run simulator"\n\
-echo ""\n\
-echo "Documentation:"\n\
-echo "  cat README.md        - Project overview"\n\
-echo "  cat docs/DOCKER.md   - Docker guide"\n\
-echo ""\n\
-/bin/bash\n\
-' > /entrypoint.sh && chmod +x /entrypoint.sh
+# Build Go TUI (optional, requires TTY at runtime)
+WORKDIR /app/tui
+RUN go mod download
+WORKDIR /app
+ENV CGO_ENABLED=1
+RUN make tui
 
-# Definir entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
+# Set TUI as entrypoint
+WORKDIR /app/tui
+ENTRYPOINT ["./archsim-tui"]
+CMD ["../examples/test_stack.asm"]

@@ -1,0 +1,48 @@
+==========================================
+  COMO EXECUTAR O SIMULADOR - 1 CLIQUE
+==========================================
+
+WINDOWS:
+--------
+1. Instale Docker Desktop (se não tiver)
+   https://docs.docker.com/desktop/install/windows-install/
+
+2. Dê duplo clique em: EXECUTAR.bat
+
+3. Pronto! A TUI vai abrir automaticamente
+
+
+LINUX/MAC:
+----------
+1. Instale Docker (se não tiver)
+   Linux: https://docs.docker.com/engine/install/
+   Mac:   https://docs.docker.com/desktop/install/mac-install/
+
+2. Execute: ./EXECUTAR.sh
+   (ou dê duplo clique se seu sistema permitir)
+
+3. Pronto! A TUI vai abrir automaticamente
+
+
+CONTROLES DA TUI:
+-----------------
+  s  - Step (executar 1 ciclo)
+  r  - Run/Pause (executar continuamente)
+  x  - Reset CPU
+  l  - Carregar arquivo .asm
+  q  - Sair
+
+
+PROGRAMA PRÉ-CARREGADO:
+-----------------------
+O simulador já vem com test_stack.asm carregado,
+que demonstra operações de pilha (PUSH/POP).
+
+
+PROBLEMAS?
+----------
+- Docker não encontrado: Instale Docker Desktop
+- Erro na compilação: Verifique espaço em disco (~500MB)
+- TUI não aparece: Certifique-se de usar terminal com suporte a TUI
+
+==========================================

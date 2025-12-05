@@ -1,8 +1,6 @@
 module github.com/ytower/archsim-mic1/tui
 
-go 1.24.0
-
-toolchain go1.24.10
+go 1.23
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

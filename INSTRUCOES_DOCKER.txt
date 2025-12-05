@@ -1,0 +1,54 @@
+==========================================
+  INSTRUÇÕES PARA EXECUTAR O SIMULADOR
+==========================================
+
+OPÇÃO 1: EXECUÇÃO RÁPIDA (RECOMENDADO)
+--------------------------------------
+
+Linux/macOS:
+  ./run-docker.sh
+
+Windows:
+  run-docker.bat
+
+Isso irá:
+  1. Construir a imagem Docker automaticamente
+  2. Compilar todo o projeto
+  3. Abrir a TUI com programa de exemplo já carregado
+
+
+OPÇÃO 2: EXECUÇÃO MANUAL
+-------------------------
+
+1. Construir a imagem:
+   docker build -t archsim-mic1:latest .
+
+2. Executar:
+   docker run --rm -it archsim-mic1:latest
+
+
+CONTROLES DA TUI
+----------------
+
+  s  - Step (executar 1 ciclo)
+  r  - Run/Pause (executar continuamente)
+  x  - Reset CPU
+  l  - Carregar arquivo .asm
+  q  - Sair
+
+
+REQUISITOS
+----------
+
+- Docker instalado
+- ~500MB de espaço em disco
+
+
+PROBLEMAS?
+----------
+
+- Docker não encontrado: Instale Docker Desktop
+- Erro na compilação: Verifique se tem espaço em disco
+- TUI não aparece: Use flags -it no docker run
+
+==========================================
