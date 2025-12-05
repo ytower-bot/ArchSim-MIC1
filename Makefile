@@ -165,6 +165,8 @@ TUI_BIN = $(TUI_DIR)/archsim-tui
 GO = go
 
 tui: $(OBJDIR)/libmic1.a
+	@echo "[GO] Tidying TUI module..."
+	@cd $(TUI_DIR) && $(GO) mod tidy
 	@echo "[GO] Building TUI..."
 	@cd $(TUI_DIR) && $(GO) build -o archsim-tui
 	@echo "[OK] TUI built successfully: $(TUI_BIN)"
