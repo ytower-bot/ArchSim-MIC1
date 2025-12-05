@@ -26,7 +26,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Global keys
+
 	switch msg.String() {
 	case "q", "ctrl+c":
 		return m, tea.Quit
@@ -35,12 +35,10 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// If help is shown, only handle toggle
 	if m.showHelp {
 		return m, nil
 	}
 
-	// File picker controls
 	if m.showFilePicker {
 		switch msg.String() {
 		case "esc", "l":
@@ -58,7 +56,7 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "enter":
 			if len(m.asmFiles) > 0 {
-				// Load the selected file
+
 				filename := m.asmFiles[m.selectedFile]
 				filepath := getAsmFilePath(filename)
 				m.loadFile(filepath)
@@ -69,7 +67,6 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Memory view specific controls
 	if m.showMemoryView {
 		switch msg.String() {
 		case "d":
@@ -89,7 +86,6 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Results view specific controls
 	if m.showResultsView {
 		switch msg.String() {
 		case "t", "esc":
@@ -99,7 +95,6 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Cache view specific controls
 	if m.showCacheView {
 		switch msg.String() {
 		case "c", "esc":
@@ -109,7 +104,6 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Main controls
 	switch msg.String() {
 	case "s":
 		return m.handleStep(), nil
@@ -144,10 +138,9 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m model) handleStep() model {
 	m.cpuWrapper.Step()
-	// Sync CPU state - need to use pointer to update the model correctly
+
 	(&m).syncCPUState()
 
-	// Update current line based on PC (PC points to word address, not byte address)
 	pcVal := int(m.cpu.PC)
 	if pcVal < len(m.sourceCode) {
 		m.currentLine = pcVal
@@ -158,7 +151,7 @@ func (m model) handleStep() model {
 
 func (m model) handleReset() model {
 	m.cpuWrapper.Reset()
-	// Sync CPU state - need to use pointer to update the model correctly
+
 	(&m).syncCPUState()
 	m.microcodePath = GetMicrocodePath()
 	m.currentLine = 0
@@ -168,7 +161,7 @@ func (m model) handleReset() model {
 }
 
 func (m model) handleLoad() model {
-	// Open file picker
+
 	m.asmFiles = findAsmFiles()
 	m.selectedFile = 0
 	m.showFilePicker = true
@@ -176,7 +169,7 @@ func (m model) handleLoad() model {
 }
 
 func (m model) handleLoadMicrocode() model {
-	// Reload microcode using smart path resolution
+
 	filename := getDefaultMicrocodePath()
 	err := LoadMicrocode(filename)
 

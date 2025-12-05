@@ -12,11 +12,10 @@ import (
 )
 
 type model struct {
-	// ViewPorts
+
 	codeViewport  viewport.Model
 	stateViewport viewport.Model
 
-	// State
 	cpuWrapper    *CPUWrapper
 	cpu           CPUState
 	sourceCode    []string
@@ -28,19 +27,16 @@ type model struct {
 	showMicrocode bool
 	errorMsg      string
 
-	// Memory visualization state
 	memoryFormat    string
 	showMemoryView  bool
 	showResultsView bool
 	showCacheView   bool
 	memorySnapshot  map[uint16]uint16
 
-	// File picker state
 	showFilePicker bool
 	asmFiles       []string
 	selectedFile   int
 
-	// Layout
 	width  int
 	height int
 }
@@ -68,10 +64,9 @@ type CacheStats struct {
 func initialModel(filename string) model {
 	wrapper := NewCPUWrapper()
 
-	// Load microcode using smart path resolution
 	microcodePath := getDefaultMicrocodePath()
 	if err := LoadMicrocode(microcodePath); err != nil {
-		// Log error but continue - might have been loaded already
+
 		fmt.Fprintf(os.Stderr, "Warning: Could not load microcode: %v\n", err)
 	}
 
@@ -104,10 +99,8 @@ func initialModel(filename string) model {
 		selectedFile:    0,
 	}
 
-	// Sync initial CPU state from C code
 	m.syncCPUState()
 
-	// Load file if provided
 	if filename != "" {
 		m.loadFile(filename)
 	}
@@ -120,8 +113,7 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m *model) syncCPUState() {
-	// Read all register values directly from C code
-	// Force read each register individually to ensure we get fresh values
+
 	m.cpu.PC = m.cpuWrapper.GetPC()
 	m.cpu.AC = m.cpuWrapper.GetAC()
 	m.cpu.SP = m.cpuWrapper.GetSP()
@@ -135,20 +127,19 @@ func (m *model) syncCPUState() {
 	m.cpu.CacheStats.Hits = m.cpuWrapper.GetCacheHits()
 	m.cpu.CacheStats.Misses = m.cpuWrapper.GetCacheMisses()
 
-	// Update memory snapshot for change tracking
 	m.updateMemorySnapshot()
 }
 
 func (m *model) updateMemorySnapshot() {
-	// Sample key memory regions for change detection
+
 	regions := []struct {
 		start uint16
 		end   uint16
 	}{
-		{0x0000, 0x00FF}, // Code region
-		{0x0100, 0x01FF}, // Data region
-		{m.cpu.PC & 0xFFF0, (m.cpu.PC & 0xFFF0) + 0x0010}, // Around PC
-		{m.cpu.SP & 0xFFF0, (m.cpu.SP & 0xFFF0) + 0x0010}, // Around SP
+		{0x0000, 0x00FF},
+		{0x0100, 0x01FF},
+		{m.cpu.PC & 0xFFF0, (m.cpu.PC & 0xFFF0) + 0x0010},
+		{m.cpu.SP & 0xFFF0, (m.cpu.SP & 0xFFF0) + 0x0010},
 	}
 
 	for _, region := range regions {
@@ -195,7 +186,7 @@ func (m model) getStatusLine() string {
 }
 
 func (m *model) loadFile(filename string) {
-	// Read source file
+
 	file, err := os.Open(filename)
 	if err != nil {
 		m.errorMsg = fmt.Sprintf("Cannot open file: %v", err)
@@ -214,7 +205,6 @@ func (m *model) loadFile(filename string) {
 		return
 	}
 
-	// Assemble and load into CPU
 	err = m.cpuWrapper.AssembleFile(filename)
 	if err != nil {
 		m.errorMsg = fmt.Sprintf("Assembly failed: %v", err)
@@ -239,7 +229,6 @@ func (m model) renderSourceCode() string {
 	var b strings.Builder
 	b.WriteString("SOURCE CODE\n\n")
 
-	// Bounds checking
 	if m.height < 12 {
 		b.WriteString("Window too small\n")
 		return b.String()
@@ -260,7 +249,6 @@ func (m model) renderSourceCode() string {
 		start = m.currentLine - visibleLines/2
 	}
 
-	// Ensure start is within bounds
 	if start < 0 {
 		start = 0
 	}
@@ -295,7 +283,6 @@ func (m model) renderSourceCode() string {
 func (m model) renderState() string {
 	var b strings.Builder
 
-	// Calculate available height for right panel
 	availableHeight := m.height - 10
 	if availableHeight < 20 {
 		b.WriteString("Window too small\n")
@@ -324,19 +311,15 @@ func (m model) renderState() string {
 
 	b.WriteString("MEMORY\n\n")
 
-	// Simple view: just show key addresses
 	pcAddr := m.cpu.PC
 	spAddr := m.cpu.SP
 
-	// Show PC location (current instruction)
 	pcVal := m.cpuWrapper.ReadMemory(pcAddr)
 	b.WriteString(fmt.Sprintf("@PC  [0x%04X]: 0x%04X\n", pcAddr, pcVal))
 
-	// Show SP location (stack top)
 	spVal := m.cpuWrapper.ReadMemory(spAddr)
 	b.WriteString(fmt.Sprintf("@SP  [0x%04X]: 0x%04X\n\n", spAddr, spVal))
 
-	// Cache stats
 	b.WriteString("CACHE\n\n")
 	total := m.cpu.CacheStats.Hits + m.cpu.CacheStats.Misses
 	hitRate := 0.0
@@ -372,7 +355,7 @@ OTHER
   q/ctrl+c  Quit
   esc       Close any overlay
 
-NOTE: In detailed memory view (d), use 'f' to cycle 
+NOTE: In detailed memory view (d), use 'f' to cycle
       between hex, decimal, and ASCII formats.
 
 MEMORY LEGEND
@@ -381,8 +364,8 @@ MEMORY LEGEND
   ^XX^      SP location
 
 ARCHITECTURE OVERVIEW
-This TUI simulates the MIC-1 architecture at the 
-microprogramming level. The microprogram interprets 
+This TUI simulates the MIC-1 architecture at the
+microprogramming level. The microprogram interprets
 assembly instructions.
 
 Components:
@@ -398,7 +381,7 @@ Press h to close this menu.
 }
 
 func (m model) renderMemoryView() string {
-	// Bounds checking for overlay dimensions
+
 	overlayWidth := m.width - 10
 	if overlayWidth < 40 {
 		overlayWidth = 40
@@ -439,7 +422,6 @@ func (m model) renderMemoryDetailed() string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("DETAILED MEMORY VIEW [%s]\n\n", m.memoryFormat))
 
-	// Show important regions with bounds checking
 	stackStart := m.cpu.SP
 	if stackStart > 8 {
 		stackStart = m.cpu.SP - 8
@@ -464,14 +446,12 @@ func (m model) renderMemoryDetailed() string {
 	for _, region := range regions {
 		b.WriteString(fmt.Sprintf("=== %s (0x%04X - 0x%04X) ===\n\n", region.name, region.start, region.end))
 
-		// Show in rows of 8 values
 		for addr := region.start; addr <= region.end && addr < 0x1000; {
 			b.WriteString(fmt.Sprintf("0x%04X:  ", addr))
 
 			for col := 0; col < 8 && addr <= region.end && addr < 0x1000; col++ {
 				val := m.cpuWrapper.ReadMemory(addr)
 
-				// Highlight special addresses
 				prefix := " "
 				suffix := ""
 				if addr == m.cpu.PC {
@@ -482,7 +462,6 @@ func (m model) renderMemoryDetailed() string {
 					suffix = "^"
 				}
 
-				// Check if changed
 				oldVal, existed := m.memorySnapshot[addr]
 				if existed && oldVal != val {
 					suffix += "*"
@@ -564,7 +543,6 @@ func (m model) renderMicrocode() string {
 	b.WriteString(fmt.Sprintf("Loaded: %s\n", m.microcodePath))
 	b.WriteString(fmt.Sprintf("Current MPC: 0x%02X\n\n", m.cpu.MPC))
 
-	// Read microcode file
 	if m.microcodePath == "" {
 		b.WriteString("No microcode loaded.\n")
 		return b.String()
@@ -581,7 +559,6 @@ func (m model) renderMicrocode() string {
 	lineNum := 0
 	instrNum := 0
 
-	// Show instructions around current MPC
 	startInstr := int(m.cpu.MPC) - 5
 	if startInstr < 0 {
 		startInstr = 0
@@ -591,13 +568,11 @@ func (m model) renderMicrocode() string {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// Skip empty lines and comments
 		if len(line) == 0 || line[0] == '#' {
 			lineNum++
 			continue
 		}
 
-		// Check if it's a microinstruction (32 bits)
 		if len(line) >= 32 && (line[0] == '0' || line[0] == '1') {
 			if instrNum >= startInstr && instrNum < endInstr {
 				prefix := "  "
@@ -627,7 +602,6 @@ func (m model) renderFilePicker() string {
 
 	b.WriteString("Use ↑/↓ or j/k to navigate, Enter to select, ESC to cancel\n\n")
 
-	// Calculate visible range
 	visibleLines := 15
 	start := 0
 	if m.selectedFile > visibleLines/2 {
@@ -641,7 +615,6 @@ func (m model) renderFilePicker() string {
 		end = len(m.asmFiles)
 	}
 
-	// Show files
 	for i := start; i < end; i++ {
 		prefix := "  "
 		if i == m.selectedFile {

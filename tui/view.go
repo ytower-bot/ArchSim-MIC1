@@ -37,43 +37,34 @@ func (m model) View() string {
 		return "Initializing..."
 	}
 
-	// Show help overlay
 	if m.showHelp {
 		return m.renderHelpView()
 	}
 
-	// Show microcode viewer overlay
 	if m.showMicrocode {
 		return m.renderMicrocodeView()
 	}
 
-	// Show memory viewer overlay
 	if m.showMemoryView {
 		return m.renderMemoryView()
 	}
 
-	// Show file picker overlay
 	if m.showFilePicker {
 		return m.renderFilePickerView()
 	}
 
-	// Show results viewer overlay
 	if m.showResultsView {
 		return m.renderResultsView()
 	}
 
-	// Show cache viewer overlay
 	if m.showCacheView {
 		return m.renderCacheView()
 	}
 
-	// Title bar
 	title := titleStyle.Width(m.width - 2).Render("MIC-1 SIMULATOR")
 
-	// Status bar
 	status := statusStyle.Width(m.width - 2).Render(m.getStatusLine())
 
-	// Split view with bounds checking
 	leftWidth := m.width/2 - 4
 	if leftWidth < 20 {
 		leftWidth = 20
@@ -101,7 +92,6 @@ func (m model) View() string {
 
 	content := lipgloss.JoinHorizontal(lipgloss.Top, leftPanel, rightPanel)
 
-	// Controls hint
 	controls := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#888888")).
 		Render("[s] Step [r] Run [x] Reset [l] Load | [t] Results [c] Cache [d] Memory | [h] Help [q] Quit")
@@ -130,7 +120,7 @@ func (m model) renderHelpView() string {
 }
 
 func (m model) renderMicrocodeView() string {
-	// Bounds checking for overlay dimensions
+
 	overlayWidth := m.width - 10
 	if overlayWidth < 40 {
 		overlayWidth = 40
@@ -168,7 +158,7 @@ func (m model) renderMicrocodeView() string {
 }
 
 func (m model) renderFilePickerView() string {
-	// Bounds checking for overlay dimensions
+
 	overlayWidth := m.width - 20
 	if overlayWidth < 50 {
 		overlayWidth = 50
