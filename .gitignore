@@ -61,7 +61,8 @@ mic1_simulator
 mic1asm
 
 # Assembled binaries
-examples/*.bin
+examples/
+tests/
 
 # ==============================================================================
 # BUILD ARTIFACTS (Go/TUI)
