@@ -91,6 +91,7 @@ tests/**/test_*
 # ==============================================================================
 
 reference/
+docs/GIT_WORKFLOW.md
 
 # ==============================================================================
 # CLAUDE/AI CONTEXT (Local development only)
@@ -102,11 +103,10 @@ AGENT_PROMPTS_MANUAL.md
 *.claude.md
 
 # ==============================================================================
-# AGILE/PROJECT MANAGEMENT (Optional: remove if you want to track)
+# AGILE/PROJECT MANAGEMENT (Local context only)
 # ==============================================================================
 
-# Uncomment if you don't want to track agile artifacts:
-# .agile/
+.agile/
 
 # ==============================================================================
 # IDE & EDITOR
