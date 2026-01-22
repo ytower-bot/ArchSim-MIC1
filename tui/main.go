@@ -2,6 +2,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -10,13 +11,31 @@ import (
 
 func main() {
 	var filename string
+	var debug bool
 
-	if len(os.Args) > 1 {
-		filename = os.Args[1]
+	// Parse command-line flags
+	flag.BoolVar(&debug, "debug", false, "Enable debug mode (logs to tui_debug.log)")
+	flag.BoolVar(&debug, "d", false, "Enable debug mode (short flag)")
+	flag.Parse()
+
+	// Remaining arguments (non-flag arguments)
+	args := flag.Args()
+	if len(args) > 0 {
+		filename = args[0]
 
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			fmt.Printf("Error: file not found: %s\n", filename)
 			os.Exit(1)
+		}
+	}
+
+	// Initialize debug mode if requested
+	if debug {
+		if err := InitDebugMode(); err != nil {
+			fmt.Printf("Warning: Failed to initialize debug mode: %v\n", err)
+		} else {
+			fmt.Println("Debug mode enabled. Logging to tui_debug.log")
+			defer CloseDebugMode()
 		}
 	}
 

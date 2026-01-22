@@ -113,21 +113,56 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m *model) syncCPUState() {
+	// Capture C core state BEFORE updating TUI state
+	coreState := CPUState{
+		PC:     m.cpuWrapper.GetPC(),
+		AC:     m.cpuWrapper.GetAC(),
+		SP:     m.cpuWrapper.GetSP(),
+		IR:     m.cpuWrapper.GetIR(),
+		TIR:    m.cpuWrapper.GetTIR(),
+		MPC:    m.cpuWrapper.GetMPC(),
+		Cycles: m.cpuWrapper.GetCycles(),
+		Clock:  m.cpuWrapper.GetClock(),
+		N:      m.cpuWrapper.GetFlagN(),
+		Z:      m.cpuWrapper.GetFlagZ(),
+		CacheStats: CacheStats{
+			Hits:   m.cpuWrapper.GetCacheHits(),
+			Misses: m.cpuWrapper.GetCacheMisses(),
+		},
+	}
 
-	m.cpu.PC = m.cpuWrapper.GetPC()
-	m.cpu.AC = m.cpuWrapper.GetAC()
-	m.cpu.SP = m.cpuWrapper.GetSP()
-	m.cpu.IR = m.cpuWrapper.GetIR()
-	m.cpu.TIR = m.cpuWrapper.GetTIR()
-	m.cpu.MPC = m.cpuWrapper.GetMPC()
-	m.cpu.Cycles = m.cpuWrapper.GetCycles()
-	m.cpu.Clock = m.cpuWrapper.GetClock()
-	m.cpu.N = m.cpuWrapper.GetFlagN()
-	m.cpu.Z = m.cpuWrapper.GetFlagZ()
-	m.cpu.CacheStats.Hits = m.cpuWrapper.GetCacheHits()
-	m.cpu.CacheStats.Misses = m.cpuWrapper.GetCacheMisses()
+	// Update TUI state from C core
+	m.cpu.PC = coreState.PC
+	m.cpu.AC = coreState.AC
+	m.cpu.SP = coreState.SP
+	m.cpu.IR = coreState.IR
+	m.cpu.TIR = coreState.TIR
+	m.cpu.MPC = coreState.MPC
+	m.cpu.Cycles = coreState.Cycles
+	m.cpu.Clock = coreState.Clock
+	m.cpu.N = coreState.N
+	m.cpu.Z = coreState.Z
+	m.cpu.CacheStats.Hits = coreState.CacheStats.Hits
+	m.cpu.CacheStats.Misses = coreState.CacheStats.Misses
+
+	// Debug: Log state comparison
+	if debugEnabled {
+		DebugCPUState(m.cpu.Cycles, coreState, m.cpu)
+	}
 
 	m.updateMemorySnapshot()
+
+	// Debug: Log memory comparison
+	if debugEnabled && len(m.memorySnapshot) > 0 {
+		// Read memory from C core for comparison
+		coreMemory := make(map[uint16]uint16)
+		addresses := make([]uint16, 0, len(m.memorySnapshot))
+		for addr := range m.memorySnapshot {
+			addresses = append(addresses, addr)
+			coreMemory[addr] = m.cpuWrapper.ReadMemory(addr)
+		}
+		DebugMemoryState(m.cpu.Cycles, addresses, coreMemory, m.memorySnapshot)
+	}
 }
 
 func (m *model) updateMemorySnapshot() {
