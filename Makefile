@@ -149,43 +149,72 @@ install: $(TARGET)
 	@cp $(TARGET) /usr/local/bin/
 	@echo "[INSTALL] MIC-1 Simulator installed to /usr/local/bin/"
 
+# Docker configuration
+DOCKER_IMAGE = archsim-mic1
+DOCKER_TAG = latest
+DOCKER_PLATFORM = linux/amd64
+
 # Docker targets
 docker-build:
 	@echo "[DOCKER] Building image..."
-	@docker build -t mic1-simulator .
+	@docker build --platform $(DOCKER_PLATFORM) -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
+	@echo "[DOCKER] Image built: $(DOCKER_IMAGE):$(DOCKER_TAG)"
+
+docker-run: docker-build
+	@echo "[DOCKER] Starting TUI..."
+	@docker run --rm -it --platform $(DOCKER_PLATFORM) $(DOCKER_IMAGE):$(DOCKER_TAG)
 
 docker-test: docker-build
-	@echo "[DOCKER] Running tests..."
-	@docker run --rm mic1-simulator make test
+	@echo "[DOCKER] Running tests in container..."
+	@docker run --rm --platform $(DOCKER_PLATFORM) $(DOCKER_IMAGE):$(DOCKER_TAG) /bin/bash -c "cd /app && make test"
 
 docker-shell: docker-build
-	@echo "[DOCKER] Starting shell..."
-	@docker run --rm -it mic1-simulator /bin/bash
+	@echo "[DOCKER] Starting interactive shell..."
+	@docker run --rm -it --platform $(DOCKER_PLATFORM) $(DOCKER_IMAGE):$(DOCKER_TAG) /bin/bash
+
+docker-clean:
+	@echo "[DOCKER] Removing containers..."
+	@docker ps -aq --filter ancestor=$(DOCKER_IMAGE):$(DOCKER_TAG) | xargs -r docker rm -f 2>/dev/null || true
+	@echo "[DOCKER] Removing image..."
+	@docker rmi $(DOCKER_IMAGE):$(DOCKER_TAG) 2>/dev/null || true
+	@echo "[DOCKER] Cleanup complete"
 
 # Show help
 help:
 	@echo "MIC-1 Simulator Build System"
 	@echo ""
-	@echo "Available targets:"
-	@echo "  all            - Build simulator + assembler (default)"
-	@echo "  debug          - Build with debug symbols"
-	@echo "  test           - Build and run all tests (unit + integration + golden)"
-	@echo "  test-unit      - Run unit tests only"
-	@echo "  test-integration - Run integration tests only"
-	@echo "  test-golden    - Run golden file tests (assembler validation)"
-	@echo "  run            - Build and run simulator"
-	@echo "  asm            - Assemble examples (examples/*.asm -> examples/*.bin)"
-	@echo "  tui            - Build TUI"
-	@echo "  tui-run        - Build and run TUI"
-	@echo "  tui-clean      - Remove TUI binary"
-	@echo "  clean          - Remove object files and test binaries"
-	@echo "  fclean         - Remove all build artifacts"
-	@echo "  re             - Rebuild everything"
-	@echo "  install        - Install to system path"
-	@echo "  docker-build   - Build Docker image"
-	@echo "  docker-test    - Build and test in Docker"
-	@echo "  docker-shell   - Start Docker shell"
-	@echo "  help           - Show this help"
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Build targets:"
+	@echo "  all              Build simulator + assembler (default)"
+	@echo "  debug            Build with debug symbols"
+	@echo "  tui              Build TUI (Go/Bubbletea)"
+	@echo "  asm              Assemble examples/*.asm -> examples/*.bin"
+	@echo ""
+	@echo "Run targets:"
+	@echo "  run              Run C simulator"
+	@echo "  tui-run          Build and run TUI"
+	@echo ""
+	@echo "Test targets:"
+	@echo "  test             Run all tests"
+	@echo "  test-unit        Unit tests only"
+	@echo "  test-integration Integration tests only"
+	@echo "  test-golden      Assembler validation"
+	@echo ""
+	@echo "Docker targets:"
+	@echo "  docker-run       Build image and run TUI in container"
+	@echo "  docker-build     Build Docker image only"
+	@echo "  docker-test      Run tests in container"
+	@echo "  docker-shell     Interactive shell in container"
+	@echo "  docker-clean     Remove image and containers"
+	@echo ""
+	@echo "Maintenance:"
+	@echo "  clean            Remove object files"
+	@echo "  fclean           Remove all artifacts"
+	@echo "  re               Full rebuild"
+	@echo "  install          Install to /usr/local/bin"
+	@echo ""
+	@echo "Documentation: docs/INFRASTRUCTURE.md"
 
 # Assemble all example programs
 asm: $(ASSEMBLER)
@@ -226,4 +255,6 @@ tui-clean:
 	@echo "[CLEAN] TUI binary removed"
 
 # Phony targets
-.PHONY: all debug test test-unit test-integration test-golden run asm clean fclean re install docker-build docker-test docker-shell help tui tui-run tui-clean
+.PHONY: all debug test test-unit test-integration test-golden run asm clean fclean re install help
+.PHONY: docker-build docker-run docker-test docker-shell docker-clean
+.PHONY: tui tui-run tui-clean tui-testsp
