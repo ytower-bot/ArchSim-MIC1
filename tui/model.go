@@ -145,6 +145,11 @@ func (m *model) syncCPUState() {
 	m.cpu.CacheStats.Hits = coreState.CacheStats.Hits
 	m.cpu.CacheStats.Misses = coreState.CacheStats.Misses
 
+	// Debug: Log assembly execution
+	if debugEnabled {
+		DebugAssemblyExecution(m.cpu.Cycles, m.cpu.PC, m.sourceCode, m.currentLine)
+	}
+
 	// Debug: Log state comparison
 	if debugEnabled {
 		DebugCPUState(m.cpu.Cycles, coreState, m.cpu)

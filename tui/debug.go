@@ -8,9 +8,10 @@ import (
 )
 
 var (
-	debugEnabled bool
-	debugLogger  *log.Logger
-	debugFile    *os.File
+	debugEnabled       bool
+	debugLogger        *log.Logger
+	debugFile          *os.File
+	debugMismatchCount int
 )
 
 // InitDebugMode initializes debug logging to tui_debug.log
@@ -147,11 +148,55 @@ func DebugRenderState(cycle int, displayedPC, displayedAC, displayedSP uint16) {
 	debugLogger.Println()
 }
 
+// DebugAssemblyExecution logs the assembly code being executed
+func DebugAssemblyExecution(cycle int, pc uint16, sourceCode []string, currentLine int) {
+	if !debugEnabled {
+		return
+	}
+
+	debugLogger.Printf("[CYCLE %d] ==================== Assembly Execution =======================\n", cycle)
+	debugLogger.Println()
+	debugLogger.Printf("  PC: 0x%04X (line %d)\n", pc, currentLine)
+	debugLogger.Println()
+
+	if len(sourceCode) > 0 && currentLine >= 0 && currentLine < len(sourceCode) {
+		start := currentLine - 2
+		if start < 0 {
+			start = 0
+		}
+		end := currentLine + 3
+		if end > len(sourceCode) {
+			end = len(sourceCode)
+		}
+
+		debugLogger.Println("  CODE:")
+		for i := start; i < end; i++ {
+			marker := "   "
+			if i == currentLine {
+				marker = ">>>"
+			}
+			debugLogger.Printf("    %s %04d: %s\n", marker, i, sourceCode[i])
+		}
+	} else {
+		debugLogger.Println("  CODE: (no source available)")
+	}
+
+	debugLogger.Println()
+	debugLogger.Println("========================================================================")
+	debugLogger.Println()
+}
+
+// GetMismatchCount returns the number of mismatches detected
+func GetMismatchCount() int {
+	return debugMismatchCount
+}
+
 // Helper functions for formatted output
 func logStateComparison(label string, coreVal, tuiVal uint16) {
 	status := "✓"
 	if coreVal != tuiVal {
 		status = "✗ MISMATCH"
+		debugMismatchCount++
 	}
 	debugLogger.Printf("%s:  C: 0x%04X  |  TUI: 0x%04X  %s\n", label, coreVal, tuiVal, status)
 }
@@ -160,6 +205,7 @@ func logStateComparison8(label string, coreVal, tuiVal uint8) {
 	status := "✓"
 	if coreVal != tuiVal {
 		status = "✗ MISMATCH"
+		debugMismatchCount++
 	}
 	debugLogger.Printf("%s:  C: 0x%02X    |  TUI: 0x%02X    %s\n", label, coreVal, tuiVal, status)
 }
@@ -168,6 +214,7 @@ func logFlagComparison(label string, coreVal, tuiVal bool) {
 	status := "✓"
 	if coreVal != tuiVal {
 		status = "✗ MISMATCH"
+		debugMismatchCount++
 	}
 	coreBit := 0
 	if coreVal {
