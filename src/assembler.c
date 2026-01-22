@@ -124,7 +124,8 @@ int parse_operand(const char* operand_str) {
         return -1;
     }
 
-    if (value < 0 || value > 255) {
+    // MAC-1 ISA supports 12-bit operands (0-4095 / 0x000-0xFFF)
+    if (value < 0 || value > 4095) {
         return -1;
     }
 

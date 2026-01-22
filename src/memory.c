@@ -101,12 +101,13 @@ void load_program(memory* mem, const char* filename) {
 
     while (addr < MEMORY_SIZE && !feof(file)) {
 
-        int byte1 = fgetc(file);
-        int byte2 = fgetc(file);
+        int low_byte = fgetc(file);
+        int high_byte = fgetc(file);
 
-        if (byte1 == EOF || byte2 == EOF) break;
+        if (low_byte == EOF || high_byte == EOF) break;
 
-        int value = (byte1 << 8) | byte2;
+        // Little-endian: low byte first, high byte second
+        int value = (high_byte << 8) | low_byte;
         int_to_bits(value, word, 16);
 
         copy_data(mem->data[addr], word);
