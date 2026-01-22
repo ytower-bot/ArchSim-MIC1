@@ -186,6 +186,32 @@ func DebugAssemblyExecution(cycle int, pc uint16, sourceCode []string, currentLi
 	debugLogger.Println()
 }
 
+// DebugCacheContent logs the complete cache state
+func DebugCacheContent(cycle int, cpuWrapper *CPUWrapper) {
+	if !debugEnabled {
+		return
+	}
+
+	debugLogger.Printf("[CYCLE %d] ==================== Cache Content ============================\n", cycle)
+	debugLogger.Println()
+	debugLogger.Println("  CACHE STATE (8 lines × 4 words):")
+	debugLogger.Println()
+
+	for i := 0; i < 8; i++ {
+		line := cpuWrapper.GetCacheLineInfo(i)
+		if line.Valid {
+			debugLogger.Printf("    Line %d [V] Tag: 0x%02X | Data: [0x%04X 0x%04X 0x%04X 0x%04X]\n",
+				i, line.Tag, line.Data[0], line.Data[1], line.Data[2], line.Data[3])
+		} else {
+			debugLogger.Printf("    Line %d [ ] (invalid)\n", i)
+		}
+	}
+
+	debugLogger.Println()
+	debugLogger.Println("========================================================================")
+	debugLogger.Println()
+}
+
 // GetMismatchCount returns the number of mismatches detected
 func GetMismatchCount() int {
 	return debugMismatchCount

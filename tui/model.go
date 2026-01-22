@@ -153,6 +153,7 @@ func (m *model) syncCPUState() {
 	// Debug: Log state comparison
 	if debugEnabled {
 		DebugCPUState(m.cpu.Cycles, coreState, m.cpu)
+		DebugCacheContent(m.cpu.Cycles, m.cpuWrapper)
 	}
 
 	m.updateMemorySnapshot()
