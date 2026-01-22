@@ -354,7 +354,16 @@ int assemble_string(const char* source, uint16_t* output, int* output_size) {
             inst->operand = (uint16_t)(addr / 2);
         }
 
-        output[i] = ((uint16_t)inst->opcode << 8) | (inst->operand & 0xFF);
+        // Encoding depends on instruction type:
+        // - Normal instructions (0x0-0xE): 4-bit opcode + 12-bit operand
+        // - Special instructions (0xF_): 8-bit opcode + 8-bit operand
+        if (inst->opcode >= 0xF0) {
+            // Special instructions: opcode already includes sub-opcode
+            output[i] = ((uint16_t)inst->opcode << 8) | (inst->operand & 0xFF);
+        } else {
+            // Normal instructions: 4-bit opcode in upper nibble
+            output[i] = ((uint16_t)inst->opcode << 12) | (inst->operand & 0x0FFF);
+        }
     }
 
     *output_size = as.instruction_count;
