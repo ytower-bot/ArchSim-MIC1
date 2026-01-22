@@ -463,7 +463,7 @@ func (m model) renderMemoryView() string {
 
 func (m model) renderMemoryDetailed() string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("DETAILED MEMORY VIEW [%s]\n\n", m.memoryFormat))
+	b.WriteString("DETAILED MEMORY VIEW [HEX]\n\n")
 
 	stackStart := m.cpu.SP
 	if stackStart > 8 {
@@ -482,7 +482,8 @@ func (m model) renderMemoryDetailed() string {
 		start uint16
 		end   uint16
 	}{
-		{"Code Region", 0x0000, 0x003F},
+		{"Code Region", 0x0000, 0x001F},
+		{"Data Region", 0x0080, 0x008F},
 		{"Stack Region", stackStart, stackEnd},
 	}
 
@@ -492,7 +493,7 @@ func (m model) renderMemoryDetailed() string {
 		for addr := region.start; addr <= region.end && addr < 0x1000; {
 			b.WriteString(fmt.Sprintf("0x%04X:  ", addr))
 
-			for col := 0; col < 8 && addr <= region.end && addr < 0x1000; col++ {
+			for col := 0; col < 4 && addr <= region.end && addr < 0x1000; col++ {
 				val := m.cpuWrapper.ReadMemory(addr)
 
 				prefix := " "
@@ -510,8 +511,8 @@ func (m model) renderMemoryDetailed() string {
 					suffix += "*"
 				}
 
-				formatted := m.formatValue(val)
-				b.WriteString(fmt.Sprintf("%s%s%s ", prefix, formatted, suffix))
+				// Always use hex format for memory dump
+				b.WriteString(fmt.Sprintf("%s0x%04X%s ", prefix, val, suffix))
 				addr++
 			}
 			b.WriteString("\n")
@@ -520,29 +521,49 @@ func (m model) renderMemoryDetailed() string {
 	}
 
 	b.WriteString("Legend: >PC< ^SP^ *Changed\n")
-	b.WriteString("Press 'd' to close | 'f' to change format\n")
+	b.WriteString("Press 'd' to close\n")
 
 	return b.String()
 }
 
 func (m model) renderResultsDetailed() string {
 	var b strings.Builder
-	b.WriteString("RESULTS VIEW\n\n")
-	b.WriteString("Memory addresses 0x100-0x10F (program output area)\n\n")
+	b.WriteString("RESULTS VIEW - Program Output\n\n")
+	b.WriteString("Memory 0x100-0x10F (use STOD to write here)\n")
+	b.WriteString("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
 
+	nonZeroCount := 0
 	for addr := uint16(0x100); addr <= 0x10F; addr++ {
 		val := m.cpuWrapper.ReadMemory(addr)
 
-		b.WriteString(fmt.Sprintf("[0x%03X]: 0x%04X = %5d", addr, val, int16(val)))
-
+		// Check if value changed
 		oldVal, existed := m.memorySnapshot[addr]
-		if existed && oldVal != val {
-			b.WriteString(" *")
+		changed := existed && oldVal != val
+
+		// Format address
+		addrStr := fmt.Sprintf("[0x%03X]:", addr)
+
+		// Format value - always hex primary, decimal secondary
+		valStr := fmt.Sprintf("0x%04X", val)
+
+		// Add decimal interpretation
+		decStr := fmt.Sprintf("(%d)", int16(val))
+
+		// Build line with change indicator
+		if changed {
+			// Show change with arrow indicator
+			b.WriteString(fmt.Sprintf("%s %s %8s  ◀ CHANGED\n", addrStr, valStr, decStr))
+		} else if val != 0 {
+			b.WriteString(fmt.Sprintf("%s %s %8s\n", addrStr, valStr, decStr))
+			nonZeroCount++
+		} else {
+			b.WriteString(fmt.Sprintf("%s %s %8s\n", addrStr, valStr, decStr))
 		}
-		b.WriteString("\n")
 	}
 
-	b.WriteString("\nLegend: * = Changed since last cycle\n")
+	b.WriteString("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+	b.WriteString(fmt.Sprintf("Non-zero values: %d | Cycle: %d\n", nonZeroCount, m.cpu.Cycles))
+	b.WriteString("\n◀ CHANGED = Value modified this cycle\n")
 	b.WriteString("Press 't' to close\n")
 
 	return b.String()
