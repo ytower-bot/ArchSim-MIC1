@@ -65,8 +65,10 @@ dkms.conf
 
 # Project executables
 mic1_simulator
+mic1asm
 tests/test_*
 !tests/test_*.c
+!tests/test_framework.h
 tui/archsim-tui
 
 # Build directories

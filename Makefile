@@ -26,8 +26,11 @@ LIB_SOURCES = $(filter-out $(SRCDIR)/main.c $(SRCDIR)/mic1asm.c, $(SOURCES))
 LIB_OBJECTS = $(LIB_SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 # Test files
-TEST_SOURCES = $(wildcard $(TESTDIR)/*.c)
-TEST_BINS = $(TEST_SOURCES:$(TESTDIR)/%.c=$(TESTDIR)/%)
+TEST_UNIT_SOURCES = $(wildcard $(TESTDIR)/unit/*.c)
+TEST_INTEGRATION_SOURCES = $(wildcard $(TESTDIR)/integration/*.c)
+TEST_SOURCES = $(TEST_UNIT_SOURCES) $(TEST_INTEGRATION_SOURCES)
+TEST_BINS = $(TEST_UNIT_SOURCES:$(TESTDIR)/unit/%.c=$(TESTDIR)/unit/%) \
+            $(TEST_INTEGRATION_SOURCES:$(TESTDIR)/integration/%.c=$(TESTDIR)/integration/%)
 
 # Header files
 HEADERS = $(wildcard $(INCDIR)/*.h)
@@ -66,25 +69,61 @@ debug: CFLAGS += $(DEBUGFLAGS)
 debug: clean $(TARGET)
 
 # Compile and run all tests
-test: $(TEST_BINS)
-	@echo "=========================================="
-	@echo "Running all tests..."
-	@echo "=========================================="
-	@for test in $(TEST_BINS); do \
-		echo ""; \
-		echo ">>> Running $$test..."; \
-		./$$test || exit 1; \
-		echo "[PASS] $$test"; \
-	done
+test: test-unit test-integration test-golden
 	@echo ""
 	@echo "=========================================="
-	@echo "All tests passed!"
+	@echo "✓ All tests passed!"
 	@echo "=========================================="
 
+# Run unit tests only
+test-unit: $(TEST_UNIT_SOURCES:$(TESTDIR)/unit/%.c=$(TESTDIR)/unit/%)
+	@echo "=========================================="
+	@echo "Running unit tests..."
+	@echo "=========================================="
+	@if [ -z "$(TEST_UNIT_SOURCES)" ]; then \
+		echo "No unit tests found."; \
+	else \
+		for test in $^; do \
+			echo ""; \
+			echo ">>> Running $$test..."; \
+			./$$test || exit 1; \
+		done; \
+	fi
+
+# Run integration tests only
+test-integration: $(TEST_INTEGRATION_SOURCES:$(TESTDIR)/integration/%.c=$(TESTDIR)/integration/%)
+	@echo "=========================================="
+	@echo "Running integration tests..."
+	@echo "=========================================="
+	@if [ -z "$(TEST_INTEGRATION_SOURCES)" ]; then \
+		echo "No integration tests found."; \
+	else \
+		for test in $^; do \
+			echo ""; \
+			echo ">>> Running $$test..."; \
+			./$$test || exit 1; \
+		done; \
+	fi
+
+# Run golden file tests (assembler output validation)
+test-golden: $(ASSEMBLER)
+	@echo "=========================================="
+	@echo "Running golden file tests..."
+	@echo "=========================================="
+	@if [ -f "$(TESTDIR)/golden/run_golden_tests.sh" ]; then \
+		cd $(TESTDIR)/golden && ./run_golden_tests.sh; \
+	else \
+		echo "No golden tests found."; \
+	fi
+
 # Compile individual test binaries
-$(TESTDIR)/%: $(TESTDIR)/%.c $(LIB_OBJECTS)
+$(TESTDIR)/unit/%: $(TESTDIR)/unit/%.c $(LIB_OBJECTS)
 	@echo "[CC+LD] $@"
-	@$(CC) $(CFLAGS) $< $(LIB_OBJECTS) -o $@
+	@$(CC) $(CFLAGS) -I$(TESTDIR) $< $(LIB_OBJECTS) -o $@
+
+$(TESTDIR)/integration/%: $(TESTDIR)/integration/%.c $(LIB_OBJECTS)
+	@echo "[CC+LD] $@"
+	@$(CC) $(CFLAGS) -I$(TESTDIR) $< $(LIB_OBJECTS) -o $@
 
 # Run the simulator
 run: $(TARGET)
@@ -94,6 +133,7 @@ run: $(TARGET)
 clean:
 	@rm -rf $(OBJDIR)
 	@rm -f $(TEST_BINS)
+	@find $(TESTDIR) -type f -executable -delete 2>/dev/null || true
 	@echo "[CLEAN] Object files and test binaries removed"
 
 # Clean everything
@@ -127,22 +167,25 @@ help:
 	@echo "MIC-1 Simulator Build System"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  all          - Build simulator + assembler (default)"
-	@echo "  debug        - Build with debug symbols"
-	@echo "  test         - Build and run all tests"
-	@echo "  run          - Build and run simulator"
-	@echo "  asm          - Assemble examples (examples/*.asm -> examples/*.bin)"
-	@echo "  tui          - Build TUI"
-	@echo "  tui-run      - Build and run TUI"
-	@echo "  tui-clean    - Remove TUI binary"
-	@echo "  clean        - Remove object files and test binaries"
-	@echo "  fclean       - Remove all build artifacts"
-	@echo "  re           - Rebuild everything"
-	@echo "  install      - Install to system path"
-	@echo "  docker-build - Build Docker image"
-	@echo "  docker-test  - Build and test in Docker"
-	@echo "  docker-shell - Start Docker shell"
-	@echo "  help         - Show this help"
+	@echo "  all            - Build simulator + assembler (default)"
+	@echo "  debug          - Build with debug symbols"
+	@echo "  test           - Build and run all tests (unit + integration + golden)"
+	@echo "  test-unit      - Run unit tests only"
+	@echo "  test-integration - Run integration tests only"
+	@echo "  test-golden    - Run golden file tests (assembler validation)"
+	@echo "  run            - Build and run simulator"
+	@echo "  asm            - Assemble examples (examples/*.asm -> examples/*.bin)"
+	@echo "  tui            - Build TUI"
+	@echo "  tui-run        - Build and run TUI"
+	@echo "  tui-clean      - Remove TUI binary"
+	@echo "  clean          - Remove object files and test binaries"
+	@echo "  fclean         - Remove all build artifacts"
+	@echo "  re             - Rebuild everything"
+	@echo "  install        - Install to system path"
+	@echo "  docker-build   - Build Docker image"
+	@echo "  docker-test    - Build and test in Docker"
+	@echo "  docker-shell   - Start Docker shell"
+	@echo "  help           - Show this help"
 
 # Assemble all example programs
 asm: $(ASSEMBLER)
@@ -183,4 +226,4 @@ tui-clean:
 	@echo "[CLEAN] TUI binary removed"
 
 # Phony targets
-.PHONY: all debug test run asm clean fclean re install docker-build docker-test docker-shell help tui tui-run tui-clean
+.PHONY: all debug test test-unit test-integration test-golden run asm clean fclean re install docker-build docker-test docker-shell help tui tui-run tui-clean
