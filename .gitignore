@@ -1,11 +1,18 @@
-# Prerequisites
-*.d
+# ==============================================================================
+# ArchSim-MIC1 .gitignore
+# Sanitized for Clean Code compliance
+# ==============================================================================
+
+# ==============================================================================
+# BUILD ARTIFACTS (C/C++)
+# ==============================================================================
 
 # Object files
 *.o
 *.ko
 *.obj
 *.elf
+*.d
 
 # Linker output
 *.ilk
@@ -22,7 +29,7 @@
 *.la
 *.lo
 
-# Shared objects (inc. Windows DLLs)
+# Shared objects
 *.dll
 *.so
 *.so.*
@@ -41,8 +48,113 @@
 *.su
 *.idb
 *.pdb
+*.dwo
 
-# Kernel Module Compile Results
+# Build directories
+obj/
+build/
+dist/
+.build/
+
+# Project-specific binaries (root)
+mic1_simulator
+mic1asm
+
+# Assembled binaries
+examples/*.bin
+
+# ==============================================================================
+# BUILD ARTIFACTS (Go/TUI)
+# ==============================================================================
+
+# Go binaries in tui/
+tui/archsim-tui
+tui/tui
+tui/main
+
+# Go vendor (if using vendoring)
+tui/vendor/
+vendor/
+
+# ==============================================================================
+# TEST ARTIFACTS
+# ==============================================================================
+
+# Test binaries (keep .c and .h files)
+tests/**/test_*
+!tests/**/*.c
+!tests/**/*.h
+!tests/**/test_*.c
+
+# ==============================================================================
+# REFERENCE MATERIALS (Copyright/Local only)
+# ==============================================================================
+
+reference/
+
+# ==============================================================================
+# CLAUDE/AI CONTEXT (Local development only)
+# ==============================================================================
+
+.claude/
+.claudesquad.md
+AGENT_PROMPTS_MANUAL.md
+*.claude.md
+
+# ==============================================================================
+# AGILE/PROJECT MANAGEMENT (Optional: remove if you want to track)
+# ==============================================================================
+
+# Uncomment if you don't want to track agile artifacts:
+# .agile/
+
+# ==============================================================================
+# IDE & EDITOR
+# ==============================================================================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==============================================================================
+# OS FILES
+# ==============================================================================
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+._*
+
+# ==============================================================================
+# TEMPORARY & LOG FILES
+# ==============================================================================
+
+*.tmp
+*.temp
+*.bak
+*.log
+*.cache
+
+# Debug logs
+tui_debug.log
+debug.log
+
+# ==============================================================================
+# CMAKE (if used)
+# ==============================================================================
+
+CMakeFiles/
+cmake_install.cmake
+CMakeCache.txt
+compile_commands.json
+
+# ==============================================================================
+# MISC
+# ==============================================================================
+
+# Kernel Module artifacts (legacy)
 *.mod.c
 *.mod.o
 *.cmd
@@ -52,47 +164,5 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# debug information files
-*.dwo
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Project executables
-mic1_simulator
-mic1asm
-tests/test_*
-!tests/test_*.c
-!tests/test_framework.h
-tui/archsim-tui
-
-# Build directories
-obj/
-build/
-dist/
-.build/
-
-# CMake
-CMakeFiles/
-cmake_install.cmake
-CMakeCache.txt
-
-# Dependencies
-vendor/
+# Node (if any tooling uses it)
 node_modules/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
-*.log
-obj/libmic1.a

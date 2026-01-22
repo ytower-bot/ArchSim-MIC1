@@ -24,6 +24,74 @@ cd /Users/yuri/Code/uff/arq_comp/ArchSim-MIC1/tui
 - **`h`** - Help
 - **`q`** - Quit
 
+## Debug Mode (NEW!)
+
+### Ativando Debug Mode
+Para verificar se a TUI está mostrando os valores corretos da memória e registradores:
+
+```bash
+cd tui
+./archsim-tui --debug ../examples/test_alu.asm
+# ou use a flag curta:
+./archsim-tui -d ../examples/test_alu.asm
+```
+
+### O Que Debug Mode Faz
+- Cria arquivo `tui_debug.log` no diretório atual
+- Loga comparação entre:
+  - **C Core State** (valores reais na simulação)
+  - **TUI State** (valores mostrados na tela)
+- Atualiza a cada ciclo de CPU
+
+### Exemplo de Log
+```
+[CYCLE 5] ==================== CPU State Comparison ====================
+
+  REGISTERS:
+    PC :  C: 0x0005  |  TUI: 0x0005  ✓
+    AC :  C: 0x001E  |  TUI: 0x001E  ✓
+    SP :  C: 0x0FFF  |  TUI: 0x0FFF  ✓
+    IR :  C: 0x7064  |  TUI: 0x7064  ✓
+    TIR:  C: 0x0000  |  TUI: 0x0000  ✓
+    MPC:  C: 0x00    |  TUI: 0x00    ✓
+
+  FLAGS:
+    N  :  C: 0      |  TUI: 0      ✓
+    Z  :  C: 0      |  TUI: 0      ✓
+
+  COUNTERS:
+    Cycles:  C: 0x0005  |  TUI: 0x0005  ✓
+    Clock :  C: 0x0032  |  TUI: 0x0032  ✓
+
+  CACHE:
+    Hits  :  C: 0x0003  |  TUI: 0x0003  ✓
+    Misses:  C: 0x0002  |  TUI: 0x0002  ✓
+
+========================================================================
+
+[CYCLE 5] ==================== Memory State Comparison ===================
+
+  MEMORY (showing non-zero values):
+    [0x0000]  C: 0x7064  |  TUI: 0x7064  ✓ MATCH
+    [0x0001]  C: 0x700A  |  TUI: 0x700A  ✓ MATCH
+    [0x0064]  C: 0x001E  |  TUI: 0x001E  ✓ MATCH
+
+  ✓ All memory values match
+
+========================================================================
+```
+
+### Quando Usar Debug Mode
+- Para verificar se bugs são da TUI ou da simulação C
+- Para confirmar que valores na tela são corretos
+- Para debugar problemas de sincronização CGO
+- **Se vir ✗ MISMATCH**: bug na sincronização TUI ↔ C Core!
+
+### Performance
+Debug mode adiciona ~1-2ms por ciclo devido a I/O do log. Se a TUI ficar lenta, desative debug mode.
+
+---
+
 ## O Que Observar
 
 ### test_registers.asm 
