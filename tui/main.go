@@ -30,12 +30,19 @@ func main() {
 	}
 
 	// Initialize debug mode if requested
+	var debugErr error
 	if debug {
 		if err := InitDebugMode(); err != nil {
 			fmt.Printf("Warning: Failed to initialize debug mode: %v\n", err)
 		} else {
 			fmt.Println("Debug mode enabled. Logging to tui_debug.log")
-			defer CloseDebugMode()
+			defer func() {
+				if err := CloseDebugMode(); err != nil {
+					debugErr = err
+					fmt.Printf("\n❌ Debug validation failed: %v\n", err)
+					fmt.Println("Check tui_debug.log for details")
+				}
+			}()
 		}
 	}
 
@@ -46,6 +53,10 @@ func main() {
 
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if debugErr != nil {
 		os.Exit(1)
 	}
 }

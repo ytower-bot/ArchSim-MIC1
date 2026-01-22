@@ -34,15 +34,26 @@ func InitDebugMode() error {
 	return nil
 }
 
-// CloseDebugMode closes the debug log file
-func CloseDebugMode() {
+// CloseDebugMode closes the debug log file and returns error if mismatches found
+func CloseDebugMode() error {
 	if debugFile != nil {
 		debugLogger.Println()
 		debugLogger.Println("========================================")
 		debugLogger.Printf("Debug session ended: %s\n", time.Now().Format("2006-01-02 15:04:05"))
+
+		if debugMismatchCount > 0 {
+			debugLogger.Printf("\n⚠️  WARNING: %d mismatches detected!\n", debugMismatchCount)
+			debugLogger.Println("TUI state does NOT match C core state.")
+			debugLogger.Println("========================================")
+			debugFile.Close()
+			return fmt.Errorf("%d mismatch(es) detected between TUI and C core", debugMismatchCount)
+		}
+
+		debugLogger.Println("✓ No mismatches detected. TUI state matches C core.")
 		debugLogger.Println("========================================")
 		debugFile.Close()
 	}
+	return nil
 }
 
 // DebugLog writes a debug message if debug mode is enabled
