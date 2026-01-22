@@ -96,3 +96,6 @@ Thumbs.db
 *.bak
 *.log
 obj/libmic1.a
+
+# Assembled binaries (build artifacts)
+examples/*.bin
