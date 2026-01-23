@@ -21,10 +21,12 @@ void init_register_bank(register_bank *rb){
     for(int i = 0; i < 16; i++){
         rb->Rm1.data[i] = 1;
         rb->R0.data[i] = 0;
-        rb->SP.data[i] = 0;
     }
-    for(int i = 0; i < 4; i++) rb->SP.data[i] = 0;
-    for(int i = 4; i < 16; i++) rb->SP.data[i] = 1;
+    
+    // Set SP to 0x0FFF (4095) - top of stack
+    // 0x0FFF = 0000 1111 1111 1111 in binary  
+    for(int i = 0; i < 4; i++) rb->SP.data[i] = 0;     // Upper 4 bits = 0000
+    for(int i = 4; i < 16; i++) rb->SP.data[i] = 1;    // Lower 12 bits = 1111 1111 1111
 
     for(int i = 0; i < 15; i++) rb->R1.data[i] = 0;
     rb->R1.data[15] = 1;
