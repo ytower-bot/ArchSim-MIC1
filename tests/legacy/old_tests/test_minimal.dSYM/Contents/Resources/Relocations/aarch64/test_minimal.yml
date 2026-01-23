@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/yuri/Code/uff/arq_comp/ArchSim-MIC1/tests/test_minimal'
+relocations:     []
+...
