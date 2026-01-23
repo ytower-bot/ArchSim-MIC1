@@ -32,6 +32,7 @@
 #define MAX_INSTRUCTIONS 4096
 #define MAX_LINE_LENGTH 256
 #define MAX_LABEL_LENGTH 64
+#define SOURCE_LINE_MAP_SIZE 4096
 
 typedef struct {
     char label[MAX_LABEL_LENGTH];
@@ -60,7 +61,7 @@ int assemble_string(const char* source, uint16_t* output, int* output_size);
 void init_assembler(assembler_t* as);
 int pass1(assembler_t* as, const char* source);
 int pass2(assembler_t* as, uint16_t* output);
-int parse_line(assembler_t* as, const char* line, int pass);
+int parse_line(assembler_t* as, const char* line, int pass, int line_num);
 int add_symbol(assembler_t* as, const char* label, uint16_t address);
 int lookup_symbol(assembler_t* as, const char* label);
 uint8_t parse_opcode(const char* mnemonic);
@@ -68,5 +69,13 @@ int is_valid_opcode(const char* mnemonic);
 void trim_whitespace(char* str);
 void remove_comments(char* line);
 int parse_operand(const char* operand_str);
+
+// Source line mapping (debug symbols)
+// Returns the source line number (1-based) for a given memory address
+// Returns -1 if no mapping exists
+int get_source_line(uint16_t address);
+
+// Clears the source line mapping
+void clear_source_line_map(void);
 
 #endif

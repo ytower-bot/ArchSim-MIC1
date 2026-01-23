@@ -4,6 +4,23 @@
 #include <string.h>
 #include <ctype.h>
 
+// Global source line mapping: memory_address -> source_line (1-based)
+// -1 means no mapping
+static int g_source_line_map[SOURCE_LINE_MAP_SIZE];
+
+void clear_source_line_map(void) {
+    for (int i = 0; i < SOURCE_LINE_MAP_SIZE; i++) {
+        g_source_line_map[i] = -1;
+    }
+}
+
+int get_source_line(uint16_t address) {
+    if (address >= SOURCE_LINE_MAP_SIZE) {
+        return -1;
+    }
+    return g_source_line_map[address];
+}
+
 void init_assembler(assembler_t* as) {
     as->symbol_count = 0;
     as->instruction_count = 0;
@@ -162,7 +179,7 @@ int lookup_symbol(assembler_t* as, const char* label) {
     return -1;
 }
 
-int parse_line(assembler_t* as, const char* line, int pass) {
+int parse_line(assembler_t* as, const char* line, int pass, int line_num) {
     static __attribute__((aligned(16))) char line_copy[MAX_LINE_LENGTH];
     static __attribute__((aligned(16))) char label[MAX_LABEL_LENGTH];
     static __attribute__((aligned(16))) char mnemonic[16];
@@ -253,6 +270,12 @@ int parse_line(assembler_t* as, const char* line, int pass) {
         inst->opcode = opcode;
         inst->has_label_ref = 0;
 
+        // Register source line mapping for debug symbols
+        uint16_t memory_address = as->instruction_count;
+        if (memory_address < SOURCE_LINE_MAP_SIZE) {
+            g_source_line_map[memory_address] = line_num;
+        }
+
         if (opcode >= 0xF0 && opcode <= 0xFA && opcode != 0xFC && opcode != 0xFE) {
             inst->operand = 0;
         } else {
@@ -294,7 +317,7 @@ int pass1(assembler_t* as, const char* source) {
         if (*ptr == '\n') ptr++;
         line_num++;
 
-        if (parse_line(as, line, 1) != 0) {
+        if (parse_line(as, line, 1, line_num) != 0) {
             fprintf(stderr, "Error on line %d: %s\n", line_num, as->error_msg);
             return -1;
         }
@@ -313,6 +336,9 @@ int pass2(assembler_t* as, uint16_t* output) {
 }
 
 int assemble_string(const char* source, uint16_t* output, int* output_size) {
+    // Clear source line mapping for new assembly
+    clear_source_line_map();
+    
     assembler_t as;
     init_assembler(&as);
 
@@ -337,7 +363,7 @@ int assemble_string(const char* source, uint16_t* output, int* output_size) {
         if (*ptr == '\n') ptr++;
         line_num++;
 
-        if (parse_line(&as, line, 2) != 0) {
+        if (parse_line(&as, line, 2, line_num) != 0) {
             fprintf(stderr, "Error on line %d: %s\n", line_num, as.error_msg);
             return -1;
         }

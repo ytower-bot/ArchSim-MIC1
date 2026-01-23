@@ -295,6 +295,10 @@ int cgo_assemble_file(const char* input_file) {
     free(output);
     return final_size;
 }
+
+int cgo_get_source_line(uint16_t address) {
+    return get_source_line(address);
+}
 */
 import "C"
 import (
@@ -410,6 +414,10 @@ func (cpu *CPUWrapper) AssembleFile(filename string) error {
 	}
 
 	return nil
+}
+
+func (cpu *CPUWrapper) GetSourceLine(address uint16) int {
+	return int(C.cgo_get_source_line(C.uint16_t(address)))
 }
 
 func LoadMicrocode(filename string) error {
