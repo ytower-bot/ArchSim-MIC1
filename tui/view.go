@@ -53,10 +53,6 @@ func (m model) View() string {
 		return m.renderFilePickerView()
 	}
 
-	if m.showResultsView {
-		return m.renderResultsView()
-	}
-
 	if m.showCacheView {
 		return m.renderCacheView()
 	}
@@ -94,7 +90,7 @@ func (m model) View() string {
 
 	controls := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#888888")).
-		Render("[s] Step [r] Run [x] Reset [l] Load | [t] Results [c] Cache [d] Memory | [h] Help [q] Quit")
+		Render("[s] Step [r] Run [x] Reset [l] Load | [c] Cache [d] Memory | [h] Help [q] Quit")
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -190,43 +186,6 @@ func (m model) renderFilePickerView() string {
 		lipgloss.Center,
 		lipgloss.Center,
 		picker,
-		lipgloss.WithWhitespaceChars(" "),
-		lipgloss.WithWhitespaceForeground(lipgloss.Color("#1a1a1a")),
-	)
-}
-
-func (m model) renderResultsView() string {
-	overlayWidth := m.width - 20
-	if overlayWidth < 50 {
-		overlayWidth = 50
-	}
-	if overlayWidth > m.width {
-		overlayWidth = m.width - 2
-	}
-
-	overlayHeight := m.height - 10
-	if overlayHeight < 20 {
-		overlayHeight = 20
-	}
-	if overlayHeight > m.height {
-		overlayHeight = m.height - 2
-	}
-
-	resultsStyle := lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#00AA00")).
-		Padding(1, 2).
-		Width(overlayWidth).
-		Height(overlayHeight)
-
-	results := resultsStyle.Render(m.renderResultsDetailed())
-
-	return lipgloss.Place(
-		m.width,
-		m.height,
-		lipgloss.Center,
-		lipgloss.Center,
-		results,
 		lipgloss.WithWhitespaceChars(" "),
 		lipgloss.WithWhitespaceForeground(lipgloss.Color("#1a1a1a")),
 	)

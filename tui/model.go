@@ -12,7 +12,6 @@ import (
 )
 
 type model struct {
-
 	codeViewport  viewport.Model
 	stateViewport viewport.Model
 
@@ -27,11 +26,9 @@ type model struct {
 	showMicrocode bool
 	errorMsg      string
 
-	memoryFormat    string
-	showMemoryView  bool
-	showResultsView bool
-	showCacheView   bool
-	memorySnapshot  map[uint16]uint16
+	showMemoryView bool
+	showCacheView  bool
+	memorySnapshot map[uint16]uint16
 
 	showFilePicker bool
 	asmFiles       []string
@@ -84,19 +81,17 @@ func initialModel(filename string) model {
 			Clock:  0,
 			Memory: make(map[uint16]uint16),
 		},
-		sourceCode:      []string{"No program loaded."},
-		currentLine:     0,
-		running:         false,
-		showHelp:        false,
-		showMicrocode:   false,
-		memoryFormat:    "hex",
-		showMemoryView:  false,
-		showResultsView: false,
-		showCacheView:   false,
-		memorySnapshot:  make(map[uint16]uint16),
-		showFilePicker:  false,
-		asmFiles:        []string{},
-		selectedFile:    0,
+		sourceCode:     []string{"No program loaded."},
+		currentLine:    0,
+		running:        false,
+		showHelp:       false,
+		showMicrocode:  false,
+		showMemoryView: false,
+		showCacheView:  false,
+		memorySnapshot: make(map[uint16]uint16),
+		showFilePicker: false,
+		asmFiles:       []string{},
+		selectedFile:   0,
 	}
 
 	m.syncCPUState()
@@ -194,19 +189,7 @@ func (m *model) updateMemorySnapshot() {
 }
 
 func (m model) formatValue(val uint16) string {
-	switch m.memoryFormat {
-	case "hex":
-		return fmt.Sprintf("0x%04X", val)
-	case "decimal":
-		return fmt.Sprintf("%d", val)
-	case "ascii":
-		if val >= 32 && val <= 126 {
-			return fmt.Sprintf("'%c' (0x%04X)", val, val)
-		}
-		return fmt.Sprintf("0x%04X", val)
-	default:
-		return fmt.Sprintf("0x%04X", val)
-	}
+	return fmt.Sprintf("0x%04X", val)
 }
 
 func (m model) getStatusLine() string {
@@ -255,7 +238,15 @@ func (m *model) loadFile(filename string) {
 	m.cpuWrapper.Reset()
 
 	m.loadedFile = filename
-	m.currentLine = 0
+
+	// Use source line mapping for initial position after loading
+	sourceLine := m.cpuWrapper.GetSourceLine(0)
+	if sourceLine > 0 && sourceLine <= len(m.sourceCode) {
+		m.currentLine = sourceLine - 1
+	} else {
+		m.currentLine = 0
+	}
+
 	m.errorMsg = ""
 	m.syncCPUState()
 }
@@ -389,7 +380,6 @@ EXECUTION CONTROL
   v         View microcode
 
 DISPLAY OVERLAYS
-  t         Results view (0x100-0x10F)
   c         Cache view (statistics + lines)
   d         Detailed memory view
   h/?       Toggle this help
@@ -397,9 +387,6 @@ DISPLAY OVERLAYS
 OTHER
   q/ctrl+c  Quit
   esc       Close any overlay
-
-NOTE: In detailed memory view (d), use 'f' to cycle
-      between hex, decimal, and ASCII formats.
 
 MEMORY LEGEND
   *         Value changed since last cycle
@@ -522,49 +509,6 @@ func (m model) renderMemoryDetailed() string {
 
 	b.WriteString("Legend: >PC< ^SP^ *Changed\n")
 	b.WriteString("Press 'd' to close\n")
-
-	return b.String()
-}
-
-func (m model) renderResultsDetailed() string {
-	var b strings.Builder
-	b.WriteString("RESULTS VIEW - Program Output\n\n")
-	b.WriteString("Memory 0x100-0x10F (use STOD to write here)\n")
-	b.WriteString("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
-
-	nonZeroCount := 0
-	for addr := uint16(0x100); addr <= 0x10F; addr++ {
-		val := m.cpuWrapper.ReadMemory(addr)
-
-		// Check if value changed
-		oldVal, existed := m.memorySnapshot[addr]
-		changed := existed && oldVal != val
-
-		// Format address
-		addrStr := fmt.Sprintf("[0x%03X]:", addr)
-
-		// Format value - always hex primary, decimal secondary
-		valStr := fmt.Sprintf("0x%04X", val)
-
-		// Add decimal interpretation
-		decStr := fmt.Sprintf("(%d)", int16(val))
-
-		// Build line with change indicator
-		if changed {
-			// Show change with arrow indicator
-			b.WriteString(fmt.Sprintf("%s %s %8s  ◀ CHANGED\n", addrStr, valStr, decStr))
-		} else if val != 0 {
-			b.WriteString(fmt.Sprintf("%s %s %8s\n", addrStr, valStr, decStr))
-			nonZeroCount++
-		} else {
-			b.WriteString(fmt.Sprintf("%s %s %8s\n", addrStr, valStr, decStr))
-		}
-	}
-
-	b.WriteString("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-	b.WriteString(fmt.Sprintf("Non-zero values: %d | Cycle: %d\n", nonZeroCount, m.cpu.Cycles))
-	b.WriteString("\n◀ CHANGED = Value modified this cycle\n")
-	b.WriteString("Press 't' to close\n")
 
 	return b.String()
 }

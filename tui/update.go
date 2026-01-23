@@ -72,25 +72,6 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "d":
 			m.showMemoryView = false
 			return m, nil
-		case "f":
-			switch m.memoryFormat {
-			case "hex":
-				m.memoryFormat = "decimal"
-			case "decimal":
-				m.memoryFormat = "ascii"
-			case "ascii":
-				m.memoryFormat = "hex"
-			}
-			return m, nil
-		}
-		return m, nil
-	}
-
-	if m.showResultsView {
-		switch msg.String() {
-		case "t", "esc":
-			m.showResultsView = false
-			return m, nil
 		}
 		return m, nil
 	}
@@ -106,8 +87,14 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	switch msg.String() {
 	case "s":
+		if m.loadedFile == "" {
+			return m, nil // Don't step if no program is loaded
+		}
 		return m.handleStep(), nil
 	case "r":
+		if m.loadedFile == "" {
+			return m, nil // Don't run if no program is loaded
+		}
 		m.running = !m.running
 		if m.running {
 			return m, m.tickCmd()
@@ -125,9 +112,7 @@ func (m model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "d":
 		m.showMemoryView = !m.showMemoryView
 		return m, nil
-	case "t":
-		m.showResultsView = !m.showResultsView
-		return m, nil
+
 	case "c":
 		m.showCacheView = !m.showCacheView
 		return m, nil
@@ -141,20 +126,30 @@ func (m model) handleStep() model {
 
 	(&m).syncCPUState()
 
-	pcVal := int(m.cpu.PC)
-	if pcVal < len(m.sourceCode) {
-		m.currentLine = pcVal
+	// Use source line mapping instead of PC directly
+	pcVal := m.cpu.PC
+	sourceLine := m.cpuWrapper.GetSourceLine(pcVal)
+
+	if sourceLine > 0 && sourceLine <= len(m.sourceCode) {
+		m.currentLine = sourceLine - 1 // Convert 1-based to 0-based index
 	}
+	// If no mapping, keep currentLine unchanged
 
 	return m
 }
 
 func (m model) handleReset() model {
-	m.cpuWrapper.Reset()
+	// Hard reset: reload the current file if one is loaded
+	if m.loadedFile != "" {
+		(&m).loadFile(m.loadedFile)
+	} else {
+		// If no file is loaded, just do a soft reset
+		m.cpuWrapper.Reset()
+		(&m).syncCPUState()
+		m.microcodePath = GetMicrocodePath()
+		m.currentLine = 0
+	}
 
-	(&m).syncCPUState()
-	m.microcodePath = GetMicrocodePath()
-	m.currentLine = 0
 	m.running = false
 	m.errorMsg = ""
 	return m
