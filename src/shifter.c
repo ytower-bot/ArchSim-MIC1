@@ -1,5 +1,4 @@
 #include "../include/shifter.h"
-#include "../include/datapath.h"
 #include "../include/memory.h"
 #include "../include/connections.h"
 
@@ -14,10 +13,16 @@ void lshift(shifter*s){
 }
 
 void rshift(shifter*s){
+    /*
+     * Arithmetic right shift (SRA1) per MIC-1 specification.
+     * Shifts data one bit position right, preserving sign bit.
+     * Bit 0 is MSB (sign bit), bit 15 is LSB.
+     */
+    int sign_bit = s->data[0]; /* Save sign bit */
     for(int i = 15; i > 0; i--){
         s->data[i] = s->data[i-1];
     }
-    s->data[0] = 0;
+    s->data[0] = sign_bit; /* Replicate sign bit for arithmetic shift */
 }
 
 void set_shifter_input(shifter* s, int input[16]){
@@ -42,7 +47,7 @@ void init_shifter(shifter*s){
     s->control_sh[1] = 0;
 }
 
-void run_shifter(shifter* s, mbr* b, barrC* c) {
+void run_shifter(shifter* s, struct mbr* b, struct barrC* c) {
     if (!s) return;
 
     int control_value = (s->control_sh[1] << 1) | s->control_sh[0];

@@ -1,6 +1,9 @@
-#include "../include/mic1.h"
 #include "../include/datapath.h"
+#include "../include/shifter.h"
 #include "../include/utils/conversions.h"
+
+#include <stdio.h>
+#include <stddef.h>
 
 void init_register_bank(register_bank *rb){
     for(int i = 0; i < 16; i++){
@@ -50,7 +53,13 @@ void init_decoderC(decoderC*d, register_bank*rb){
 }
 
 int control_to_index(int control[4]) {
-    return (control[0] << 3) | (control[1] << 2) | (control[2] << 1) | control[3];
+    /*
+     * Convert 4-bit control signal to register index.
+     * Per MIC-1 specification: control[0] is LSB, control[3] is MSB
+     * Microcode bits [11:8] for A, [15:12] for B, [19:16] for C
+     * are loaded sequentially, so control[0] = bit 8/12/16 (LSB)
+     */
+    return (control[3] << 3) | (control[2] << 2) | (control[1] << 1) | control[0];
 }
 
 void run_decoder(decoder* d, latch* l) {

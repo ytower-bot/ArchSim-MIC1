@@ -11,11 +11,16 @@ typedef struct shifter {
 #define SHIFT_LEFT      0b10
 #define SHIFT_UNUSED    0b11
 
+/* Forward declarations for dependencies */
+struct mbr;
+struct barrC;
+
 void set_shifter_input(shifter* s, int input[16]);
 void set_shifter_control(shifter* s, int control[2]);
 void lshift(shifter* s);
 void rshift(shifter* s);
 void init_shifter(shifter* s);
+void run_shifter(shifter* s, struct mbr* b, struct barrC* c);
 int get_shifter_control_value(int control[2]);
 
 #endif

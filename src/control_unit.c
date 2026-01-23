@@ -48,6 +48,23 @@ void decode_microinstruction(mir* m) {
         return;
     }
 
+    /*
+     * Microinstruction format (32 bits, stored as string from MSB to LSB):
+     * data[0..7]   = ADDR[7:0]  (bits 31-24: next address)
+     * data[8..11]  = A[3:0]     (bits 23-20: source A register)
+     * data[12..15] = B[3:0]     (bits 19-16: source B register)
+     * data[16..19] = C[3:0]     (bits 15-12: destination register)
+     * data[20]     = ENC        (bit 11: enable write)
+     * data[21]     = WR         (bit 10: memory write)
+     * data[22]     = RD         (bit 9: memory read)
+     * data[23]     = MAR        (bit 8: load MAR)
+     * data[24]     = MBR        (bit 7: load MBR)
+     * data[25..26] = SH[1:0]    (bits 6-5: shifter control)
+     * data[27..28] = ALU[1:0]   (bits 4-3: ALU operation)
+     * data[29..30] = COND[1:0]  (bits 2-1: branch condition)
+     * data[31]     = AMUX       (bit 0: A-mux select)
+     */
+
     m->amux = m->data[31];
     m->mbr = m->data[24];
     m->mar = m->data[23];
@@ -64,14 +81,28 @@ void decode_microinstruction(mir* m) {
     m->sh[0] = m->data[26];
     m->sh[1] = m->data[25];
 
+    /*
+     * Register fields are 4 bits each, stored MSB first in the string.
+     * A[3:0] = data[8..11], B[3:0] = data[12..15], C[3:0] = data[16..19]
+     * We need c[0]=MSB, c[3]=LSB to match control_to_index() which expects
+     * control[0]=LSB, control[3]=MSB.
+     *
+     * The string stores: data[16]=C[3], data[17]=C[2], data[18]=C[1], data[19]=C[0]
+     * We need: c[0]=C[0]=data[19], c[1]=C[1]=data[18], c[2]=C[2]=data[17], c[3]=C[3]=data[16]
+     */
     for (int i = 0; i < 4; i++) {
-        m->c[i] = m->data[16 + i];
-        m->b[i] = m->data[12 + i];
-        m->a[i] = m->data[8 + i];
+        m->c[i] = m->data[19 - i];  /* C: data[16..19] -> c[3..0] */
+        m->b[i] = m->data[15 - i];  /* B: data[12..15] -> b[3..0] */
+        m->a[i] = m->data[11 - i];  /* A: data[8..11]  -> a[3..0] */
     }
 
+    /*
+     * ADDR field: bits_to_int expects MSB first (index 0 = MSB).
+     * The string stores data[0..7] as ADDR[7..0] (MSB first), so we
+     * copy directly since bits_to_int will interpret addr[0] as MSB.
+     */
     for (int i = 0; i < 8; i++) {
-        m->addr[i] = m->data[0 + i];
+        m->addr[i] = m->data[i];  /* ADDR: data[0..7] -> addr[0..7] directly */
     }
 }
 
