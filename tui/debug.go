@@ -42,14 +42,14 @@ func CloseDebugMode() error {
 		debugLogger.Printf("Debug session ended: %s\n", time.Now().Format("2006-01-02 15:04:05"))
 
 		if debugMismatchCount > 0 {
-			debugLogger.Printf("\n⚠️  WARNING: %d mismatches detected!\n", debugMismatchCount)
+			debugLogger.Printf("\nWARNING: %d mismatches detected!\n", debugMismatchCount)
 			debugLogger.Println("TUI state does NOT match C core state.")
 			debugLogger.Println("========================================")
 			debugFile.Close()
 			return fmt.Errorf("%d mismatch(es) detected between TUI and C core", debugMismatchCount)
 		}
 
-		debugLogger.Println("✓ No mismatches detected. TUI state matches C core.")
+		debugLogger.Println("No mismatches detected. TUI state matches C core.")
 		debugLogger.Println("========================================")
 		debugFile.Close()
 	}
@@ -133,9 +133,9 @@ func DebugMemoryState(cycle int, addresses []uint16, coreValues, tuiValues map[u
 
 	debugLogger.Println()
 	if mismatches > 0 {
-		debugLogger.Printf("  ⚠️  WARNING: %d memory mismatches detected!\n", mismatches)
+		debugLogger.Printf("  WARNING: %d memory mismatches detected!\n", mismatches)
 	} else {
-		debugLogger.Println("  ✓ All memory values match")
+		debugLogger.Println("  All memory values match")
 	}
 	debugLogger.Println()
 	debugLogger.Println("========================================================================")

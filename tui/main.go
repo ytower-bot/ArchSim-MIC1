@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -39,7 +38,7 @@ func main() {
 			defer func() {
 				if err := CloseDebugMode(); err != nil {
 					debugErr = err
-					fmt.Printf("\n❌ Debug validation failed: %v\n", err)
+					fmt.Printf("\nDebug validation failed: %v\n", err)
 					fmt.Println("Check tui_debug.log for details")
 				}
 			}()
