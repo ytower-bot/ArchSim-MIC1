@@ -153,9 +153,145 @@ void run_mic1_program(mic1_cpu* cpu) {
     cpu->running = 1;
 }
 
+/**
+ * Direct instruction executor (high-level interpretation)
+ * Executes one machine instruction without microcode.
+ * This is used for testing/tracing when microprogram is not loaded.
+ */
+static void execute_instruction_direct(mic1_cpu* cpu) {
+    if (!cpu) return;
+
+    /* Fetch instruction at PC */
+    int pc = bits_to_int(cpu->reg_bank.PC.data, 16);
+    if (pc >= MEMORY_SIZE) {
+        cpu->running = 0;
+        return;
+    }
+
+    int instr = bits_to_int(cpu->main_memory.data[pc], 16);
+    int opcode = (instr >> 12) & 0xF;
+    int operand = instr & 0x0FFF;
+
+    /* Store instruction in IR */
+    int_to_bits(instr, cpu->reg_bank.IR.data, 16);
+
+    /* Get current register values */
+    int ac = bits_to_int(cpu->reg_bank.AC.data, 16);
+    int sp = bits_to_int(cpu->reg_bank.SP.data, 16);
+
+    /* Execute based on opcode */
+    int next_pc = pc + 1;  /* Default: advance PC */
+    int new_ac = ac;
+    int new_sp = sp;
+    int mem_addr, mem_val;
+
+    switch (opcode) {
+        case 0x0:  /* LODD - Load Direct: AC <- M[addr] */
+            mem_val = bits_to_int(cpu->main_memory.data[operand], 16);
+            new_ac = mem_val;
+            break;
+
+        case 0x1:  /* STOD - Store Direct: M[addr] <- AC */
+            int_to_bits(ac, cpu->main_memory.data[operand], 16);
+            break;
+
+        case 0x2:  /* ADDD - Add Direct: AC <- AC + M[addr] */
+            mem_val = bits_to_int(cpu->main_memory.data[operand], 16);
+            new_ac = (ac + mem_val) & 0xFFFF;
+            break;
+
+        case 0x3:  /* SUBD - Subtract Direct: AC <- AC - M[addr] */
+            mem_val = bits_to_int(cpu->main_memory.data[operand], 16);
+            new_ac = (ac - mem_val) & 0xFFFF;
+            break;
+
+        case 0x4:  /* JPOS - Jump if Positive: if AC > 0 then PC <- addr */
+            /* Treat as signed 16-bit */
+            if (ac > 0 && ac < 0x8000) {
+                next_pc = operand;
+            }
+            break;
+
+        case 0x5:  /* JZER - Jump if Zero: if AC == 0 then PC <- addr */
+            if (ac == 0) {
+                next_pc = operand;
+            }
+            break;
+
+        case 0x6:  /* JUMP - Unconditional Jump: PC <- addr */
+            next_pc = operand;
+            break;
+
+        case 0x7:  /* LOCO - Load Constant: AC <- constant */
+            new_ac = operand;
+            break;
+
+        case 0x8:  /* LODL - Load Local: AC <- M[SP + offset] */
+            mem_addr = (sp + operand) & 0xFFF;
+            mem_val = bits_to_int(cpu->main_memory.data[mem_addr], 16);
+            new_ac = mem_val;
+            break;
+
+        case 0x9:  /* STOL - Store Local: M[SP + offset] <- AC */
+            mem_addr = (sp + operand) & 0xFFF;
+            int_to_bits(ac, cpu->main_memory.data[mem_addr], 16);
+            break;
+
+        case 0xA:  /* ADDL - Add Local: AC <- AC + M[SP + offset] */
+            mem_addr = (sp + operand) & 0xFFF;
+            mem_val = bits_to_int(cpu->main_memory.data[mem_addr], 16);
+            new_ac = (ac + mem_val) & 0xFFFF;
+            break;
+
+        case 0xB:  /* SUBL - Subtract Local: AC <- AC - M[SP + offset] */
+            mem_addr = (sp + operand) & 0xFFF;
+            mem_val = bits_to_int(cpu->main_memory.data[mem_addr], 16);
+            new_ac = (ac - mem_val) & 0xFFFF;
+            break;
+
+        case 0xC:  /* JNEG - Jump if Negative: if AC < 0 then PC <- addr */
+            /* Treat as signed 16-bit (negative if bit 15 is set) */
+            if (ac >= 0x8000) {
+                next_pc = operand;
+            }
+            break;
+
+        case 0xD:  /* JNZE - Jump if Not Zero: if AC != 0 then PC <- addr */
+            if (ac != 0) {
+                next_pc = operand;
+            }
+            break;
+
+        case 0xE:  /* CALL - Call subroutine: SP <- SP - 1; M[SP] <- PC + 1; PC <- addr */
+            new_sp = (sp - 1) & 0xFFF;
+            int_to_bits(pc + 1, cpu->main_memory.data[new_sp], 16);
+            next_pc = operand;
+            break;
+
+        case 0xF:  /* PSHI - Push Indirect: SP <- SP - 1; M[SP] <- M[AC] */
+            new_sp = (sp - 1) & 0xFFF;
+            mem_val = bits_to_int(cpu->main_memory.data[ac & 0xFFF], 16);
+            int_to_bits(mem_val, cpu->main_memory.data[new_sp], 16);
+            break;
+
+        default:
+            /* Unknown opcode - halt */
+            cpu->running = 0;
+            return;
+    }
+
+    /* Update registers */
+    int_to_bits(new_ac, cpu->reg_bank.AC.data, 16);
+    int_to_bits(new_sp, cpu->reg_bank.SP.data, 16);
+    int_to_bits(next_pc, cpu->reg_bank.PC.data, 16);
+
+    cpu->cycle_count++;
+}
+
 void step_mic1(mic1_cpu* cpu) {
     if (!cpu) return;
-    run_mic1_cycle(cpu);
+    /* Use direct execution for now (microprogram not loaded) */
+    execute_instruction_direct(cpu);
 }
 
 void print_cpu_state(mic1_cpu* cpu) {
@@ -220,9 +356,42 @@ int load_microprogram_file(mic1_cpu* cpu, const char* filename) {
 }
 
 int load_program_file(mic1_cpu* cpu, const char* filename) {
-    if (!cpu || !filename) return 0;
-    printf("Loading program: %s\n", filename);
-    return 1;
+    if (!cpu || !filename) return -1;
+
+    FILE* fp = fopen(filename, "rb");
+    if (!fp) {
+        fprintf(stderr, "Error: Cannot open file '%s'\n", filename);
+        return -1;
+    }
+
+    /* Get file size */
+    fseek(fp, 0, SEEK_END);
+    long file_size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    if (file_size <= 0 || file_size > MEMORY_SIZE * 2) {
+        fprintf(stderr, "Error: Invalid file size (%ld bytes)\n", file_size);
+        fclose(fp);
+        return -1;
+    }
+
+    /* Read 16-bit instructions (big-endian) */
+    int address = 0;
+    unsigned char buf[2];
+
+    while (fread(buf, 1, 2, fp) == 2 && address < MEMORY_SIZE) {
+        /* Little-endian: low byte first (matches assembler output) */
+        int instruction = (buf[1] << 8) | buf[0];
+
+        /* Convert to bit array (MSB first) */
+        for (int i = 0; i < 16; i++) {
+            cpu->main_memory.data[address][i] = (instruction >> (15 - i)) & 1;
+        }
+        address++;
+    }
+
+    fclose(fp);
+    return 0;  /* Success */
 }
 
 void connect_components(mic1_cpu* cpu) {
