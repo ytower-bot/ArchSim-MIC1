@@ -9,14 +9,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Build project
-      run: make clean && make
-      
-    - name: Run executable (non-interactive)
-      run: ./mic1_simulator
-      env:
-        CI: true
+      run: make clean && make all
+
+    - name: Run CI validation
+      run: make ci-test

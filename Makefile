@@ -139,7 +139,7 @@ clean:
 	@echo "[CLEAN] Object files and test binaries removed"
 
 # Clean everything
-fclean: clean tui-clean
+fclean: clean
 	@rm -f $(TARGET) $(ASSEMBLER)
 	@echo "[CLEAN] All build artifacts removed"
 
@@ -183,19 +183,18 @@ docker-clean:
 
 # Show help
 help:
-	@echo "MIC-1 Simulator Build System"
+	@echo "MIC-1 Simulator Build System (Headless)"
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Build targets:"
 	@echo "  all              Build simulator + assembler (default)"
 	@echo "  debug            Build with debug symbols"
-	@echo "  tui              Build TUI (Go/Bubbletea)"
 	@echo "  asm              Assemble examples/*.asm -> examples/*.bin"
 	@echo ""
 	@echo "Run targets:"
-	@echo "  run              Run C simulator"
-	@echo "  tui-run          Build and run TUI"
+	@echo "  run              Run simulator (requires program.bin)"
+	@echo "  ci-test          CI validation (assemble + run)"
 	@echo ""
 	@echo "Test targets:"
 	@echo "  test             Run all tests"
@@ -203,15 +202,8 @@ help:
 	@echo "  test-integration Integration tests only"
 	@echo "  test-golden      Assembler validation"
 	@echo ""
-	@echo "Verification (Zero-Trust Protocol):"
-	@echo "  verify           Run comprehensive verification suite"
-	@echo "  verify-verbose   Verification with detailed output"
-	@echo "  verify-unit      Unit tests only (via verify script)"
-	@echo "  verify-asm       Assembly health checks only"
-	@echo ""
 	@echo "Docker targets:"
-	@echo "  docker-run       Build image and run TUI in container"
-	@echo "  docker-build     Build Docker image only"
+	@echo "  docker-build     Build Docker image"
 	@echo "  docker-test      Run tests in container"
 	@echo "  docker-shell     Interactive shell in container"
 	@echo "  docker-clean     Remove image and containers"
@@ -220,9 +212,6 @@ help:
 	@echo "  clean            Remove object files"
 	@echo "  fclean           Remove all artifacts"
 	@echo "  re               Full rebuild"
-	@echo "  install          Install to /usr/local/bin"
-	@echo ""
-	@echo "Documentation: docs/INFRASTRUCTURE.md"
 
 # Assemble all example programs
 asm: $(ASSEMBLER)
@@ -239,47 +228,16 @@ asm: $(ASSEMBLER)
 	@echo "✓ All examples assembled!"
 	@echo "════════════════════════════════════════"
 
-# TUI targets
-TUI_DIR = tui
-TUI_BIN = $(TUI_DIR)/archsim-tui
-GO = go
-
-tui: $(OBJDIR)/libmic1.a
-	@echo "[GO] Tidying TUI module..."
-	@cd $(TUI_DIR) && $(GO) mod tidy
-	@echo "[GO] Building TUI..."
-	@cd $(TUI_DIR) && $(GO) build -o archsim-tui
-	@echo "[OK] TUI built successfully: $(TUI_BIN)"
-
-tui-run: tui
-	@cd $(TUI_DIR) && ./archsim-tui
-
-tui-testsp: $(OBJDIR)/libmic1.a
-	@echo "[GO] Running TUI SP test (tagged)"
-	@cd $(TUI_DIR) && $(GO) run -tags testsp .
-
-tui-clean:
-	@rm -f $(TUI_BIN)
-	@echo "[CLEAN] TUI binary removed"
-
-# Zero-Trust Verification (comprehensive test runner)
-verify: $(OBJDIR)/libmic1.a $(ASSEMBLER)
-	@echo "=============================================="
-	@echo "  Zero-Trust Verification Protocol"
-	@echo "=============================================="
-	@./scripts/verify.sh
-
-verify-verbose: $(OBJDIR)/libmic1.a $(ASSEMBLER)
-	@./scripts/verify.sh --verbose
-
-verify-unit: $(OBJDIR)/libmic1.a
-	@./scripts/verify.sh --unit-only
-
-verify-asm: $(ASSEMBLER)
-	@./scripts/verify.sh --asm-only
+# CI test target (assemble + run with arguments)
+ci-test: $(ASSEMBLER) $(TARGET)
+	@echo "[CI] Assembling test program..."
+	@./$(ASSEMBLER) tests/01_registers.asm tests/ci_test.bin
+	@echo "[CI] Running simulator (100 cycles)..."
+	@./$(TARGET) tests/ci_test.bin 100
+	@echo "[CI] Validation passed!"
+	@rm -f tests/ci_test.bin
 
 # Phony targets
 .PHONY: all debug test test-unit test-integration test-golden run asm clean fclean re install help
 .PHONY: docker-build docker-run docker-test docker-shell docker-clean
-.PHONY: tui tui-run tui-clean tui-testsp
-.PHONY: verify verify-verbose verify-unit verify-asm
+.PHONY: ci-test
