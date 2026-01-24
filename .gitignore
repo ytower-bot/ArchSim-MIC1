@@ -87,6 +87,13 @@ tests/**/test_*
 !tests/**/*.h
 !tests/**/test_*.c
 
+# Assembled binary outputs
+*.bin
+tests/**/*.bin
+
+# Scripts directory outputs
+scripts/
+
 # ==============================================================================
 # REFERENCE MATERIALS (Copyright/Local only)
 # ==============================================================================
