@@ -5,7 +5,6 @@
 
 #include "../test_framework.h"
 #include "../../include/mic1.h"
-#include "../../include/assembler.h"
 #include "../../include/control_unit.h"
 #include <stdio.h>
 #include <string.h>
@@ -23,7 +22,7 @@ TEST_CASE(integration_load_and_execute_simple_program) {
     int result = load_microprogram(&cpu.ctrl_mem, microcode_path);
     ASSERT_TRUE(result > 0);
 
-    const char* test_program = "examples/test_registers.asm";
+    const char* test_program = "tests/01_registers.asm";
     FILE* test_file = fopen(test_program, "r");
     ASSERT_NOT_NULL(test_file);
     fclose(test_file);

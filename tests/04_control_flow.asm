@@ -1,105 +1,96 @@
-# ============================================================================
-# TEST 04: CONTROL FLOW - Jumps, Conditions & Loop Counter
-# ============================================================================
-# OBJECTIVE: Test JUMP, JPOS, JNEG and implement a countdown loop (5→0)
-# EXPECTED RESULTS:
-#   - Unconditional jump works correctly
-#   - Positive jump (JPOS) executes when AC ≥ 0  
-#   - Negative jump (JNEG) executes when AC < 0
-#   - Loop counter decrements from 5 to 0
-#   - Memory [0x400] = 5, [0x401] = 4, ... [0x405] = 0 (loop trace)
-# ============================================================================
+; ============================================================================
+; TEST 04: CONTROL FLOW - Jumps, Conditions & Loop Counter
+; ============================================================================
+; OBJECTIVE: Test JUMP, JPOS, JNEG and implement a countdown loop (3->0)
+; EXPECTED RESULTS:
+;   - Unconditional jump works correctly
+;   - Positive jump (JPOS) executes when AC > 0
+;   - Negative jump (JNEG) executes when AC < 0
+;   - Loop counter decrements correctly
+;   - Final success marker at Memory[1058] = 1549
+; ============================================================================
 
-.ORG 0x000
+; Test 1: Unconditional Jump Test
+        JUMP JUMP_TEST      ; Should jump to jump_test label
+        LOCO 2989           ; Should NOT execute this (bad marker)
+        STOD 1024           ; Should NOT execute this
 
-# Test 1: Unconditional Jump Test
-JUMP jump_test          # Should jump to jump_test label
-LOCO 0xBAD              # Should NOT execute this (bad marker)
-STOD 0x400              # Should NOT execute this
+JUMP_TEST:
+        LOCO 1549           ; AC <- 1549 (0x60D good marker - proves jump worked)
+        STOD 1024           ; Memory[1024] <- success marker
 
-jump_test:
-LOCO 0x600D             # AC ← 0x600D (good marker - proves jump worked)  
-STOD 0x400              # Memory[0x400] ← success marker
+; Test 2: Positive Number Test (JPOS)
+        LOCO 66             ; AC <- 66 (positive number)
+        JPOS POS_TEST       ; Should jump because AC > 0
+        LOCO 2989           ; Should NOT execute
+        STOD 1025           ; Should NOT execute
 
-# Test 2: Positive Number Test (JPOS)
-LOCO 0x042              # AC ← 66 (positive number)
-JPOS pos_test           # Should jump because AC > 0
-LOCO 0xBAD              # Should NOT execute
-STOD 0x401              # Should NOT execute
+POS_TEST:
+        LOCO 1549           ; AC <- 1549 (success marker)
+        STOD 1025           ; Memory[1025] <- success marker
 
-pos_test:
-LOCO 0x600D             # AC ← 0x600D (success marker)
-STOD 0x401              # Memory[0x401] ← success marker  
+; Test 3: Negative Number Test (JNEG)
+; Note: 0xFFFF in 16-bit is -1 (65535 unsigned, or we use a large value > 32767)
+        LOCO 4095           ; AC <- 4095 (0xFFF - this is positive, need different approach)
+        STOD 1040           ; Store for later subtraction
+        LOCO 0              ; AC <- 0
+        SUBD 1040           ; AC <- 0 - 4095 = -4095 (negative in twos complement)
+        JNEG NEG_TEST       ; Should jump because AC < 0
+        LOCO 2989           ; Should NOT execute
+        STOD 1026           ; Should NOT execute
 
-# Test 3: Negative Number Test (JNEG)
-LOCO 0xFFF              # AC ← 0xFFF (negative in two's complement)
-JNEG neg_test           # Should jump because AC < 0
-LOCO 0xBAD              # Should NOT execute
-STOD 0x402              # Should NOT execute
+NEG_TEST:
+        LOCO 1549           ; AC <- 1549 (success marker)
+        STOD 1026           ; Memory[1026] <- success marker
 
-neg_test:
-LOCO 0x600D             # AC ← 0x600D (success marker)
-STOD 0x402              # Memory[0x402] ← success marker
+; Test 4: Simple Loop Counter - Count from 3 down to 0
+        LOCO 3              ; AC <- 3 (loop counter)
+        STOD 1048           ; Memory[1048] <- counter storage
 
-# Test 4: Loop Counter - Count from 5 down to 0
-LOCO 0x005              # AC ← 5 (loop counter)
-STOD 0x410              # Memory[0x410] ← counter storage
+LOOP_START:
+        LODD 1048           ; AC <- current counter value
+        JZER LOOP_DONE      ; If counter = 0, exit loop
 
-loop_start:
-LODD 0x410              # AC ← current counter value
-STOD 0x411              # Memory[0x411] ← save counter for trace
+; Decrement counter
+        LOCO 1              ; AC <- 1
+        STOD 1049           ; Memory[1049] <- 1 (for subtraction)
+        LODD 1048           ; AC <- counter
+        SUBD 1049           ; AC <- counter - 1
+        STOD 1048           ; Memory[1048] <- new counter
 
-# Store counter value in trace array  
-LODD 0x411              # AC ← counter value
-ADDD 0x500              # AC ← counter + 0x500 (base address for trace)
-STOD 0x412              # Memory[0x412] ← trace address
-# (Note: This is simplified - real implementation would use indirect addressing)
+; Continue loop
+        JUMP LOOP_START     ; Loop back
 
-# Manual trace storage (since we can't do computed addressing easily)
-LODD 0x411              # AC ← counter value
-STOD 0x420              # Memory[0x420] ← counter (will be overwritten each loop)
+LOOP_DONE:
+        LOCO 3566           ; AC <- 3566 (0xDEE - done marker)
+        STOD 1056           ; Memory[1056] <- done marker
 
-# Decrement counter
-LODD 0x410              # AC ← counter  
-LOCO 0x001              # Need to subtract 1
-STOD 0x413              # Memory[0x413] ← 1
-LODD 0x410              # AC ← counter
-SUBD 0x413              # AC ← counter - 1
-STOD 0x410              # Memory[0x410] ← new counter
+; Test 5: Zero Test (JPOS should NOT jump on 0)
+        LOCO 0              ; AC <- 0
+        JPOS SHOULD_NOT     ; Should NOT jump (0 is not positive)
+        LOCO 1549           ; AC <- success (this should execute)
+        STOD 1057           ; Memory[1057] <- success marker
+        JUMP FINAL_HALT     ; Skip the "should not execute" section
 
-# Check if counter reached 0
-JZER loop_done          # If counter = 0, exit loop
+SHOULD_NOT:
+        LOCO 2989           ; Should NOT execute
+        STOD 1057           ; Should NOT execute
 
-# Check if counter is positive (continue loop)  
-JPOS loop_start         # If counter > 0, continue loop
+FINAL_HALT:
+; Final success marker
+        LOCO 1549           ; AC <- 1549 (final success)
+        STOD 1058           ; Memory[1058] <- final success marker
+        JUMP FINAL_HALT     ; Infinite loop
 
-loop_done:
-LOCO 0xD0NE             # AC ← 0xD0NE (done marker)
-STOD 0x421              # Memory[0x421] ← done marker
-
-# Test 5: Zero Test (should not jump)
-LOCO 0x000              # AC ← 0
-JPOS should_not_jump    # Should NOT jump (0 is not positive) 
-LOCO 0x600D             # AC ← success (this should execute)
-STOD 0x422              # Memory[0x422] ← success marker
-JUMP final_halt         # Skip the "should not execute" section
-
-should_not_jump:
-LOCO 0xBAD              # Should NOT execute
-STOD 0x422              # Should NOT execute
-
-final_halt:
-JUMP final_halt         # Infinite loop
-
-# ============================================================================
-# EXPECTED FINAL MEMORY STATE:
-#   [0x400] = 0x600D     # Unconditional jump success marker
-#   [0x401] = 0x600D     # JPOS test success marker 
-#   [0x402] = 0x600D     # JNEG test success marker
-#   [0x410] = 0x0000     # Final counter value (0)
-#   [0x420] = 0x0000     # Last counter value stored (0)  
-#   [0x421] = 0xD0NE     # Loop completion marker
-#   [0x422] = 0x600D     # Zero test success (proved JPOS didn't jump on 0)
-# EXPECTED REGISTER STATE:
-#   AC = 0x600D          # Should contain final success marker
-# ============================================================================
+; ============================================================================
+; EXPECTED FINAL MEMORY STATE:
+;   [1024] = 1549     ; Unconditional jump success marker
+;   [1025] = 1549     ; JPOS test success marker
+;   [1026] = 1549     ; JNEG test success marker
+;   [1048] = 0        ; Final counter value (0)
+;   [1056] = 3566     ; Loop completion marker (0xDEE)
+;   [1057] = 1549     ; Zero test success (proved JPOS did not jump on 0)
+;   [1058] = 1549     ; Final success marker
+; EXPECTED REGISTER STATE:
+;   AC = 1549         ; Should contain final success marker
+; ============================================================================

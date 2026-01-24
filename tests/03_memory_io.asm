@@ -1,77 +1,75 @@
-# ============================================================================
-# TEST 03: MEMORY I/O - Memory Read/Write Integrity Verification
-# ============================================================================
-# OBJECTIVE: Write values to memory, read them back, and verify integrity
-# STRATEGY: Write → Read → Subtract → Check if difference = 0
-# EXPECTED RESULTS:
-#   - Original value written correctly
-#   - Value read back matches written value
-#   - Difference (write - read) = 0 
-#   - Memory [0x300] = 0x0000 (proves read/write integrity)
-# ============================================================================
+; ============================================================================
+; TEST 03: MEMORY I/O - Memory Read/Write Integrity Verification
+; ============================================================================
+; OBJECTIVE: Write values to memory, read them back, and verify integrity
+; STRATEGY: Write -> Read -> Subtract -> Check if difference = 0
+; EXPECTED RESULTS:
+;   - Original value written correctly
+;   - Value read back matches written value
+;   - Difference (write - read) = 0
+;   - Memory [787] = 1549 (proves read/write integrity)
+; ============================================================================
 
-.ORG 0x000
+; Test 1: Write a test pattern to memory
+        LOCO 171            ; AC <- 171 (0xAB test pattern)
+        STOD 768            ; Memory[768] <- 171
 
-# Test 1: Write a test pattern to memory
-LOCO 0x0AB              # AC ← 0x0AB (171 decimal, test pattern)
-STOD 0x300              # Memory[0x300] ← 0x0AB
+; Test 2: Write second test value
+        LOCO 291            ; AC <- 291 (0x123)
+        STOD 769            ; Memory[769] <- 291
 
-# Test 2: Write second test value
-LOCO 0x123              # AC ← 0x123 (291 decimal)  
-STOD 0x301              # Memory[0x301] ← 0x123
+; Test 3: Write third test value
+        LOCO 1110           ; AC <- 1110 (0x456)
+        STOD 770            ; Memory[770] <- 1110
 
-# Test 3: Write third test value
-LOCO 0x456              # AC ← 0x456 (1110 decimal)
-STOD 0x302              # Memory[0x302] ← 0x456
+; Test 4: Read back first value and verify integrity
+        LODD 768            ; AC <- Memory[768] (should be 171)
+        STOD 784            ; Memory[784] <- read value (for inspection)
 
-# Test 4: Read back first value and verify integrity
-LODD 0x300              # AC ← Memory[0x300] (should be 0x0AB)
-STOD 0x310              # Memory[0x310] ← read value (for inspection)
+; Test 5: Subtract original from read value (should be 0)
+        LOCO 171            ; AC <- 171 (original value)
+        STOD 785            ; Memory[785] <- original for comparison
+        LODD 784            ; AC <- read value
+        SUBD 785            ; AC <- read - original (should be 0)
+        STOD 786            ; Memory[786] <- difference (should be 0)
 
-# Test 5: Subtract original from read value (should be 0)
-LOCO 0x0AB              # AC ← 0x0AB (original value)
-STOD 0x311              # Memory[0x311] ← original for comparison  
-LODD 0x310              # AC ← read value
-SUBD 0x311              # AC ← read - original (should be 0)
-STOD 0x312              # Memory[0x312] ← difference (should be 0)
+; Test 6: Check if difference is zero (integrity test)
+        JZER SUCCESS        ; If difference = 0, memory I/O is working
 
-# Test 6: Check if difference is zero (integrity test)
-JZER success            # If difference = 0, memory I/O is working
+; FAILURE PATH
+FAIL:
+        LOCO 2989           ; AC <- 2989 (0xBAD failure marker)
+        STOD 787            ; Memory[787] <- failure marker
+        JUMP HALT           ; Jump to halt
 
-# FAILURE PATH
-fail:
-LOCO 0xBAD              # AC ← 0xBAD (failure marker)
-STOD 0x313              # Memory[0x313] ← failure marker
-JUMP halt               # Jump to halt
+; SUCCESS PATH
+SUCCESS:
+        LOCO 1549           ; AC <- 1549 (0x60D success marker)
+        STOD 787            ; Memory[787] <- success marker
 
-# SUCCESS PATH  
-success:
-LOCO 0x600D             # AC ← 0x600D (success marker)
-STOD 0x313              # Memory[0x313] ← success marker
+; Verify second value as well
+        LODD 769            ; AC <- Memory[769] (should be 291)
+        STOD 788            ; Memory[788] <- second read value
 
-# Verify second value as well
-LODD 0x301              # AC ← Memory[0x301] (should be 0x123)  
-STOD 0x314              # Memory[0x314] ← second read value
+; Verify third value
+        LODD 770            ; AC <- Memory[770] (should be 1110)
+        STOD 789            ; Memory[789] <- third read value
 
-# Verify third value
-LODD 0x302              # AC ← Memory[0x302] (should be 0x456)
-STOD 0x315              # Memory[0x315] ← third read value
+; HALT
+HALT:
+        JUMP HALT           ; Infinite loop
 
-# HALT
-halt:
-JUMP halt               # Infinite loop
-
-# ============================================================================
-# EXPECTED FINAL MEMORY STATE:
-#   [0x300] = 0x00AB     # First test pattern written
-#   [0x301] = 0x0123     # Second test pattern written  
-#   [0x302] = 0x0456     # Third test pattern written
-#   [0x310] = 0x00AB     # First value read back
-#   [0x311] = 0x00AB     # Original value for comparison
-#   [0x312] = 0x0000     # Difference (read - original), should be 0
-#   [0x313] = 0x600D     # Success marker (proves integrity check passed)
-#   [0x314] = 0x0123     # Second value read back  
-#   [0x315] = 0x0456     # Third value read back
-# EXPECTED REGISTER STATE:
-#   AC = 0x0456          # Should contain last read value
-# ============================================================================
+; ============================================================================
+; EXPECTED FINAL MEMORY STATE:
+;   [768] = 171       ; First test pattern written
+;   [769] = 291       ; Second test pattern written
+;   [770] = 1110      ; Third test pattern written
+;   [784] = 171       ; First value read back
+;   [785] = 171       ; Original value for comparison
+;   [786] = 0         ; Difference (read - original), should be 0
+;   [787] = 1549      ; Success marker (proves integrity check passed)
+;   [788] = 291       ; Second value read back
+;   [789] = 1110      ; Third value read back
+; EXPECTED REGISTER STATE:
+;   AC = 1110         ; Should contain last read value
+; ============================================================================
