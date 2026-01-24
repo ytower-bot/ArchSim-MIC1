@@ -1,147 +1,133 @@
 # ArchSim-MIC1
 
-Simulador educacional da microarquitetura MIC-1 baseado na especificação de Andrew Tanenbaum.
+Simulador educacional da microarquitetura MIC-1 baseado na especificacao de Andrew Tanenbaum.
 
-## Características
+## Caracteristicas
 
-- Implementação completa da via de dados MIC-1
-- Unidade de controle microprogramada com 256 microinstruções
-- Sistema de memória com cache unificada (8 linhas × 4 palavras)
-- Montador assembly para instruções IJVM
-- Interface TUI (Terminal User Interface) interativa em Go
-- Suporte para todas as 23 instruções IJVM
-- Integração C/Go via CGO
+- Implementacao completa da via de dados MIC-1
+- Unidade de controle microprogramada
+- Sistema de memoria com cache unificada
+- Montador assembly para instrucoes da ISA Tanenbaum
+- Modo headless com trace de execucao
 
-## Compilação
+## Compilacao
 
 ```bash
-make clean       # Limpar artefatos de build
-make all         # Compilar simulador + assembler
-make tui         # Compilar interface TUI
-```
-
-## Verificação (Zero-Trust Protocol)
-
-```bash
-make verify      # Executa suite completa de testes (unit + integration + asm)
-make test        # Executa testes tradicionais
+make all      # Compila simulador + assembler
+make clean    # Remove artefatos
+make fclean   # Remove tudo (binarios inclusos)
 ```
 
 ## Uso
 
-### TUI (Terminal User Interface)
-
-```bash
-make tui-run
-```
-
-Controles:
-- `l` - Abrir seletor de arquivos .asm
-- `s` - Executar um ciclo
-- `r` - Executar continuamente / Pausar
-- `x` - Resetar CPU
-- `d` - Alternar visualização detalhada de memória
-- `f` - Alternar formato (hex/decimal/ASCII)
-- `h` - Ajuda
-- `q` - Sair
-
 ### Montador
 
 ```bash
-./mic1asm input.asm output.bin
+./mic1asm input.asm              # Gera input.bin
+./mic1asm input.asm output.bin   # Gera output.bin
 ```
 
-## Instruções IJVM
+### Simulador
 
-### Instruções com Operando de 12 bits (0x0-0xE)
-- LODD addr - Load Direct
-- STOD addr - Store Direct
-- ADDD addr - Add Direct
-- SUBD addr - Subtract Direct
-- JPOS addr - Jump if Positive
-- JZER addr - Jump if Zero
-- JUMP addr - Unconditional Jump
-- LOCO const - Load Constant
-- LODL offset - Load Local
-- STOL offset - Store Local
-- ADDL offset - Add Local
-- SUBL offset - Subtract Local
-- JNEG addr - Jump if Negative
-- JNZE addr - Jump if Not Zero
-- CALL addr - Call Procedure
+```bash
+./mic1_simulator program.bin         # Executa 50 ciclos (padrao)
+./mic1_simulator program.bin 1000    # Executa 1000 ciclos
+```
 
-### Instruções Especiais (0xF)
-- PSHI - Push Indirect
-- POPI - Pop Indirect
-- PUSH - Push AC
-- POP - Pop to AC
-- RETN - Return
-- SWAP - Swap AC and SP
-- INSP - Increment SP
-- DESP - Decrement SP
+O simulador imprime um trace de execucao mostrando:
+- Estado dos registradores (PC, AC, SP, IR) por ciclo
+- Instrucao decodificada e seu significado
+- Estado final da memoria
+
+### Verificacao
+
+```bash
+make verify   # Monta teste e executa simulador
+```
+
+## Instrucoes da ISA
+
+### Com Operando de 12 bits (0x0-0xE)
+
+| Opcode | Instrucao | Descricao |
+|--------|-----------|-----------|
+| 0x0 | LODD addr | AC <- M[addr] |
+| 0x1 | STOD addr | M[addr] <- AC |
+| 0x2 | ADDD addr | AC <- AC + M[addr] |
+| 0x3 | SUBD addr | AC <- AC - M[addr] |
+| 0x4 | JPOS addr | if AC > 0: PC <- addr |
+| 0x5 | JZER addr | if AC == 0: PC <- addr |
+| 0x6 | JUMP addr | PC <- addr |
+| 0x7 | LOCO const | AC <- const |
+| 0x8 | LODL offset | AC <- M[SP + offset] |
+| 0x9 | STOL offset | M[SP + offset] <- AC |
+| 0xA | ADDL offset | AC <- AC + M[SP + offset] |
+| 0xB | SUBL offset | AC <- AC - M[SP + offset] |
+| 0xC | JNEG addr | if AC < 0: PC <- addr |
+| 0xD | JNZE addr | if AC != 0: PC <- addr |
+| 0xE | CALL addr | SP <- SP - 1; M[SP] <- PC; PC <- addr |
+
+### Instrucoes Especiais (0xF)
+
+| Subop | Instrucao | Descricao |
+|-------|-----------|-----------|
+| 0xF0 | PSHI | Push M[AC] |
+| 0xF2 | POPI | Pop to M[AC] |
+| 0xF4 | PUSH | Push AC |
+| 0xF6 | POP | Pop to AC |
+| 0xF8 | RETN | Return |
+| 0xFA | SWAP | Swap AC, SP |
+| 0xFC | INSP n | SP <- SP + n |
+| 0xFE | DESP n | SP <- SP - n |
 
 ## Arquitetura
 
 ### Registradores
-- PC - Program Counter
-- AC - Accumulator
-- SP - Stack Pointer
-- IR - Instruction Register
-- TIR - Temporary Instruction Register
-- MPC - Microprogram Counter
+- **PC** - Program Counter (16 bits)
+- **AC** - Accumulator (16 bits)
+- **SP** - Stack Pointer (16 bits)
+- **IR** - Instruction Register (16 bits)
 
-### Memória
-- 4096 palavras × 16 bits
-- Cache unificada: 8 linhas × 4 palavras
+### Memoria
+- 4096 palavras x 16 bits
 
 ### ALU
-- 4 operações: A, B, A+B, A AND B
+- Operacoes: A, B, A+B, A AND B
 - Flags: N (negative), Z (zero)
-
-## Documentação
-
-- `docs/ArchSim-MIC1.md` - Especificação técnica completa
-- `docs/ASSEMBLER_GUIDE.md` - Guia do montador
-- `docs/DOCKER.md` - Instruções Docker
-- `tui/README.md` - Documentação da TUI
-- `tui/TUI_GUIDE.md` - Guia de uso da TUI
-
-## Requisitos
-
-- GCC ou Clang (C99)
-- Go 1.24+ (para TUI)
-- Make
 
 ## Estrutura do Projeto
 
 ```
 ArchSim-MIC1/
-├── src/          # Código fonte C (simulador core)
-│   ├── mic1.c           # CPU principal e ciclo de execução
-│   ├── datapath.c       # Via de dados (decoders, latches)
-│   ├── control_unit.c   # Unidade de controle (MIR, MPC, MMUX)
-│   ├── alu.c            # Unidade lógica aritmética
-│   ├── shifter.c        # Deslocador
-│   ├── memory.c         # Memória principal e cache
-│   ├── assembler.c      # Montador IJVM
-│   └── utils/           # Utilitários (conversões)
-├── include/      # Headers C
-├── data/         # Microcódigo (basic_microcode.txt)
-├── examples/     # Programas exemplo em assembly
-├── docs/         # Documentação técnica
-└── tui/          # Interface TUI (Go + CGO)
-    ├── cgo_wrapper.go   # Ponte C/Go
-    ├── model.go         # Modelo de dados
-    ├── view.go          # Renderização
-    └── update.go        # Lógica de atualização
+├── src/           # Codigo C
+│   ├── mic1.c     # CPU e ciclo de execucao
+│   ├── main.c     # CLI e trace logger
+│   ├── alu.c      # Unidade logica aritmetica
+│   ├── memory.c   # Sistema de memoria
+│   └── mic1asm.c  # Montador
+├── include/       # Headers
+├── tests/         # Programas de teste (.asm)
+├── examples/      # Exemplos
+├── docs/          # Documentacao
+├── Makefile
+└── Dockerfile
 ```
 
-## Arquitetura Técnica
+## Requisitos
 
-O projeto utiliza uma arquitetura híbrida C/Go:
+- GCC (C99)
+- Make
 
-1. **Backend C**: Implementa toda a lógica do simulador MIC-1
-2. **CGO Wrapper**: Interface entre C e Go (`cgo_wrapper.go`)
-3. **Frontend Go**: Interface TUI usando `bubbletea` e `lipgloss`
+## Docker
 
-A comunicação ocorre através de funções C exportadas via CGO, permitindo que o Go chame funções C e acesse estruturas de dados do simulador.
+```bash
+make docker-build   # Constroi imagem
+make docker-test    # Executa verificacao no container
+make docker-shell   # Shell interativo
+```
+
+## Documentacao
+
+- `docs/ArchSim-MIC1.md` - Especificacao tecnica
+- `docs/ASSEMBLER_GUIDE.md` - Guia do montador
+- `docs/MICROCODE.md` - Formato do microcodigo
