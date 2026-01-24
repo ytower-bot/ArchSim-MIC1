@@ -1,4 +1,4 @@
-# MIC-1 Simulator Makefile (Headless Backend)
+# MIC-1 Simulator Makefile
 
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99 -I include/
@@ -10,17 +10,23 @@ OBJDIR = obj
 TESTDIR = tests
 
 TARGET = mic1_simulator
+TUI = mic1_tui
 ASSEMBLER = mic1asm
 
 # Source files
 ALL_SOURCES = $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/utils/*.c)
-EXCLUDED = $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c $(SRCDIR)/mic1asm.c
+EXCLUDED = $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c $(SRCDIR)/mic1asm.c $(SRCDIR)/main_tui.c $(SRCDIR)/ui.c
 SOURCES = $(filter-out $(EXCLUDED), $(ALL_SOURCES))
 OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
-# Library objects (for assembler linking)
-LIB_SOURCES = $(filter-out $(SRCDIR)/main.c $(SRCDIR)/mic1asm.c, $(SOURCES))
+# Library objects (core without main files)
+LIB_SOURCES = $(filter-out $(SRCDIR)/main.c $(SRCDIR)/main_tui.c $(SRCDIR)/mic1asm.c $(SRCDIR)/ui.c, $(ALL_SOURCES))
+LIB_SOURCES := $(filter-out $(SRCDIR)/memoryini.c $(SRCDIR)/memoryread.c, $(LIB_SOURCES))
 LIB_OBJECTS = $(LIB_SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+
+# TUI objects
+TUI_SOURCES = $(SRCDIR)/main_tui.c $(SRCDIR)/ui.c
+TUI_OBJECTS = $(OBJDIR)/main_tui.o $(OBJDIR)/ui.o
 
 HEADERS = $(wildcard $(INCDIR)/*.h)
 
@@ -28,6 +34,9 @@ HEADERS = $(wildcard $(INCDIR)/*.h)
 
 all: $(TARGET) $(ASSEMBLER)
 	@echo "[OK] Build complete: $(TARGET), $(ASSEMBLER)"
+
+full: all $(TUI)
+	@echo "[OK] Full build: $(TARGET), $(ASSEMBLER), $(TUI)"
 
 $(OBJDIR):
 	@mkdir -p $(OBJDIR) $(OBJDIR)/utils
@@ -43,6 +52,18 @@ $(TARGET): $(OBJECTS)
 $(ASSEMBLER): $(OBJDIR)/mic1asm.o $(LIB_OBJECTS)
 	@echo "[LD] $@"
 	@$(CC) $^ -o $@
+
+# TUI build
+$(TUI): $(TUI_OBJECTS) $(LIB_OBJECTS)
+	@echo "[LD] $@"
+	@$(CC) $^ -o $@
+
+tui: $(TUI)
+	@echo "[OK] TUI built: $(TUI)"
+
+tui-run: $(TUI) $(ASSEMBLER)
+	@if [ ! -f tests/demo.bin ]; then ./$(ASSEMBLER) tests/01_registers.asm tests/demo.bin; fi
+	./$(TUI) tests/demo.bin
 
 debug: CFLAGS += $(DEBUGFLAGS)
 debug: clean all
@@ -67,7 +88,7 @@ clean:
 	@echo "[CLEAN] Build artifacts removed"
 
 fclean: clean
-	@rm -f $(TARGET) $(ASSEMBLER)
+	@rm -f $(TARGET) $(ASSEMBLER) $(TUI)
 	@echo "[CLEAN] All binaries removed"
 
 re: fclean all
@@ -100,24 +121,28 @@ docker-clean:
 # === HELP ===
 
 help:
-	@echo "MIC-1 Simulator (Headless)"
+	@echo "MIC-1 Simulator"
 	@echo ""
 	@echo "Build:"
-	@echo "  make all      Build simulator + assembler"
+	@echo "  make all      Build CLI simulator + assembler"
+	@echo "  make tui      Build interactive TUI"
+	@echo "  make full     Build everything"
 	@echo "  make debug    Build with debug symbols"
-	@echo ""
-	@echo "Test:"
-	@echo "  make verify   Assemble + run test program"
-	@echo "  make ci-test  Same as verify (for CI)"
 	@echo ""
 	@echo "Run:"
 	@echo "  ./mic1asm <input.asm> [output.bin]"
 	@echo "  ./mic1_simulator <program.bin> [cycles]"
+	@echo "  ./mic1_tui <program.bin>"
+	@echo ""
+	@echo "  make tui-run  Build TUI and run with demo"
+	@echo ""
+	@echo "Test:"
+	@echo "  make verify   Assemble + run test"
 	@echo ""
 	@echo "Clean:"
 	@echo "  make clean    Remove objects"
-	@echo "  make fclean   Remove all artifacts"
+	@echo "  make fclean   Remove all"
 	@echo "  make re       Full rebuild"
 
-.PHONY: all debug verify ci-test clean fclean re asm run help
+.PHONY: all full tui tui-run debug verify ci-test clean fclean re asm run help
 .PHONY: docker-build docker-test docker-shell docker-clean
