@@ -134,6 +134,8 @@ clean:
 	@rm -rf $(OBJDIR)
 	@rm -f $(TEST_BINS)
 	@find $(TESTDIR) -type f -executable -delete 2>/dev/null || true
+	@find $(TESTDIR) -name "*.dSYM" -type d -exec rm -rf {} + 2>/dev/null || true
+	@find $(TESTDIR) -name "*.bin" -type f -delete 2>/dev/null || true
 	@echo "[CLEAN] Object files and test binaries removed"
 
 # Clean everything
@@ -201,6 +203,12 @@ help:
 	@echo "  test-integration Integration tests only"
 	@echo "  test-golden      Assembler validation"
 	@echo ""
+	@echo "Verification (Zero-Trust Protocol):"
+	@echo "  verify           Run comprehensive verification suite"
+	@echo "  verify-verbose   Verification with detailed output"
+	@echo "  verify-unit      Unit tests only (via verify script)"
+	@echo "  verify-asm       Assembly health checks only"
+	@echo ""
 	@echo "Docker targets:"
 	@echo "  docker-run       Build image and run TUI in container"
 	@echo "  docker-build     Build Docker image only"
@@ -254,7 +262,24 @@ tui-clean:
 	@rm -f $(TUI_BIN)
 	@echo "[CLEAN] TUI binary removed"
 
+# Zero-Trust Verification (comprehensive test runner)
+verify: $(OBJDIR)/libmic1.a $(ASSEMBLER)
+	@echo "=============================================="
+	@echo "  Zero-Trust Verification Protocol"
+	@echo "=============================================="
+	@./scripts/verify.sh
+
+verify-verbose: $(OBJDIR)/libmic1.a $(ASSEMBLER)
+	@./scripts/verify.sh --verbose
+
+verify-unit: $(OBJDIR)/libmic1.a
+	@./scripts/verify.sh --unit-only
+
+verify-asm: $(ASSEMBLER)
+	@./scripts/verify.sh --asm-only
+
 # Phony targets
 .PHONY: all debug test test-unit test-integration test-golden run asm clean fclean re install help
 .PHONY: docker-build docker-run docker-test docker-shell docker-clean
 .PHONY: tui tui-run tui-clean tui-testsp
+.PHONY: verify verify-verbose verify-unit verify-asm
