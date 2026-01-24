@@ -15,9 +15,16 @@ Simulador educacional da microarquitetura MIC-1 baseado na especificação de An
 ## Compilação
 
 ```bash
-make clean
-make all
-make tui
+make clean       # Limpar artefatos de build
+make all         # Compilar simulador + assembler
+make tui         # Compilar interface TUI
+```
+
+## Verificação (Zero-Trust Protocol)
+
+```bash
+make verify      # Executa suite completa de testes (unit + integration + asm)
+make test        # Executa testes tradicionais
 ```
 
 ## Uso
